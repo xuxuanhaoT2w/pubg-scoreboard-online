@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Check,
   Copy,
@@ -6,6 +6,7 @@ import {
   LogOut,
   Pencil,
   Plus,
+  RefreshCw,
   Share2,
   Trash2,
   Trophy,
@@ -16,7 +17,8 @@ import { useAppStore } from '../store/app-store';
 import { useToast } from '../components/toast';
 import { useConfirm } from '../components/confirm-dialog';
 import { formatDateTime } from '../lib/format';
-import { addGlobalPlayer } from '../lib/supabase';
+import { addGlobalPlayer, deleteGlobalPlayer, listGlobalPlayers } from '../lib/supabase';
+import type { Player } from '../lib/types';
 
 export function SettingsPage() {
   const {
@@ -35,6 +37,8 @@ export function SettingsPage() {
 
   const [newName, setNewName] = useState('');
   const [saveAsGlobal, setSaveAsGlobal] = useState(false);
+  const [globalPlayers, setGlobalPlayers] = useState<Player[]>([]);
+  const [globalName, setGlobalName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [copied, setCopied] = useState(false);
@@ -42,6 +46,41 @@ export function SettingsPage() {
 
   const playerGameCount = (id: string): number =>
     games.filter((g) => g.participantIds.includes(id)).length;
+
+  const loadGlobalPlayers = async () => {
+    try {
+      setGlobalPlayers(await listGlobalPlayers());
+    } catch (e) {
+      toast.error(e instanceof Error ? `全局人员加载失败：${e.message}` : '全局人员加载失败');
+    }
+  };
+
+  useEffect(() => { void loadGlobalPlayers(); }, []);
+
+  const handleAddGlobal = async () => {
+    const name = globalName.trim();
+    if (!name) return;
+    try {
+      await addGlobalPlayer(name);
+      setGlobalName('');
+      await loadGlobalPlayers();
+      toast.success(`「${name}」已保存到全局人员库`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '名称已存在或保存失败');
+    }
+  };
+
+  const handleDeleteGlobal = async (id: string, name: string) => {
+    const ok = await confirm({ title: `删除全局人员「${name}」？`, message: '仅从全局人员库移除，不影响当前房间成员和历史对局。', confirmText: '删除', cancelText: '取消', danger: true });
+    if (!ok) return;
+    try {
+      await deleteGlobalPlayer(id);
+      setGlobalPlayers((previous) => previous.filter((player) => player.id !== id));
+      toast.success('已从全局人员库移除');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '删除失败');
+    }
+  };
 
   const handleAdd = async () => {
     const name = newName.trim();
@@ -304,6 +343,32 @@ export function SettingsPage() {
             {players.length === 0 && (
               <p className="py-4 text-center text-sm text-ink-muted">还没有队员</p>
             )}
+          </div>
+        </section>
+
+        {/* 全局人员库 */}
+        <section className="tac-card p-5">
+          <h2 className="mb-2 flex items-center gap-2 font-display text-base font-bold">
+            <Users size={17} className="text-primary" /> 全局人员库
+            <button type="button" className="ml-auto text-primary" aria-label="刷新全局人员库" onClick={() => void loadGlobalPlayers()}><RefreshCw size={16} /></button>
+          </h2>
+          <p className="mb-3 text-xs leading-relaxed text-ink-muted">在此新增的人员可在之后创建任意房间时直接选取；删除不会影响已在房间中的队员。</p>
+          <div className="mb-3 flex gap-2">
+            <input
+              className="tac-input h-10 flex-1"
+              placeholder="输入全局人员昵称"
+              value={globalName}
+              maxLength={12}
+              onChange={(e) => setGlobalName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') void handleAddGlobal(); }}
+            />
+            <button type="button" className="tac-btn tac-btn-primary h-10 px-4" onClick={() => void handleAddGlobal()}>
+              <Plus size={16} /> 添加
+            </button>
+          </div>
+          <div className="space-y-2">
+            {globalPlayers.map((player) => <div key={player.id} className="flex items-center gap-2 rounded-lg border border-line bg-panel-2 px-3 py-2"><span className="flex-1 text-sm font-semibold">{player.name}</span><button type="button" className="tac-btn h-8 w-8 px-0 text-loss" aria-label={`删除全局人员 ${player.name}`} onClick={() => void handleDeleteGlobal(player.id, player.name)}><Trash2 size={14} /></button></div>)}
+            {globalPlayers.length === 0 && <p className="py-3 text-center text-sm text-ink-muted">暂无全局人员</p>}
           </div>
         </section>
 
