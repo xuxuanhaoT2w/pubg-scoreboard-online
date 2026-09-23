@@ -8,11 +8,14 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { Game, Player } from '../lib/types';
+import type { Game, Match, Player } from '../lib/types';
 import {
   addPlayer as apiAddPlayer,
   createRoom as apiCreateRoom,
+  createMatch as apiCreateMatch,
+  deleteRoom as apiDeleteRoom,
   deleteGameRow,
+  endMatch as apiEndMatch,
   deletePlayer as apiDeletePlayer,
   getDraft,
   getRoomById,
@@ -20,6 +23,7 @@ import {
   initSupabase,
   insertGame,
   listGames,
+  listMatches,
   listPlayers,
   renamePlayer as apiRenamePlayer,
   saveDraft as apiSaveDraft,
@@ -37,12 +41,15 @@ interface RoomStore {
   room: RoomRow | null;
   players: Player[];
   games: Game[];
+  matches: Match[];
+  currentMatch: Match | null;
   draft: DraftPayload | null;
   meId: string | null;
   // 房间
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
-  leaveRoom: () => void;
+  leaveRoom: () => Promise<void>;
+  endCurrentMatch: () => Promise<void>;
   // 身份
   setMe: (playerId: string | null) => void;
   // 队员
@@ -80,6 +87,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [room, setRoom] = useState<RoomRow | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [games, setGames] = useState<Game[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [draft, setDraftState] = useState<DraftPayload | null>(null);
   const draftRef = useRef<DraftPayload | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
@@ -93,13 +101,16 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
 
   // 载入某房间的全部数据并建立实时订阅
   const loadRoom = useCallback(async (roomId: string) => {
-    const [p, g, d] = await Promise.all([
+    const [p, allMatches, d] = await Promise.all([
       listPlayers(roomId),
-      listGames(roomId),
+      listMatches(roomId),
       getDraft(roomId),
     ]);
+    const active = allMatches.find((match) => match.status === 'active') ?? null;
+    const g = active ? await listGames(roomId, active.id) : [];
     setPlayers(p);
     setGames(g);
+    setMatches(allMatches);
     const playerIds = new Set(p.map((player) => player.id));
     setDraft({
       participantIds: d.participantIds.filter((id) => playerIds.has(id)),
@@ -160,7 +171,13 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         if (table === 'players') {
           setPlayers(await listPlayers(room.id));
         } else if (table === 'games') {
-          setGames(await listGames(room.id));
+          const active = matches.find((match) => match.status === 'active');
+          setGames(active ? await listGames(room.id, active.id) : []);
+        } else if (table === 'matches') {
+          const allMatches = await listMatches(room.id);
+          setMatches(allMatches);
+          const active = allMatches.find((match) => match.status === 'active');
+          setGames(active ? await listGames(room.id, active.id) : []);
         } else {
           setDraft(await getDraft(room.id));
         }
@@ -169,7 +186,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       }
     });
     return unsubscribe;
-  }, [status, room]);
+  }, [status, room, matches]);
 
   const createRoom = useCallback(
     async (name: string, seeds: string[]) => {
@@ -177,11 +194,12 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       const seedNames = seeds.length ? seeds : DEFAULT_SEEDS;
       if (seedNames.length > MAX_PLAYERS) throw new Error(`一个房间最多 ${MAX_PLAYERS} 名队员`);
       const normalized = seedNames.map((item) => item.trim()).filter(Boolean);
-      if (new Set(normalized).size !== normalized.length) throw new Error('队员昵称不能重复');
+      if (new Set(normalized.map((item) => item.toLocaleLowerCase())).size !== normalized.length) throw new Error('队员昵称不能重复');
       const { room: r, players: seedPlayers } = await apiCreateRoom(
         name.trim() || '开黑计分板',
         normalized,
       );
+      await apiCreateMatch(r.id, '第 1 场');
       // 草稿默认全员参战、击杀全 0、无人吃鸡
       const initial: DraftPayload = {
         participantIds: seedPlayers.map((p) => p.id),
@@ -216,7 +234,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     [loadRoom],
   );
 
-  const leaveRoom = useCallback(() => {
+  const leaveRoom = useCallback(async () => {
+    if (room) await apiDeleteRoom(room.id);
     try {
       Object.keys(localStorage)
         .filter((key) => key === ROOM_KEY || key.startsWith('pubg.me.'))
@@ -228,10 +247,11 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setRoom(null);
     setPlayers([]);
     setGames([]);
+    setMatches([]);
     setDraft(null);
     setMeId(null);
     setStatus('no-room');
-  }, []);
+  }, [room]);
 
   const setMe = useCallback(
     (playerId: string | null) => {
@@ -254,7 +274,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       const normalized = name.trim();
       if (!normalized) throw new Error('队员昵称不能为空');
       if (players.length >= MAX_PLAYERS) throw new Error(`一个房间最多 ${MAX_PLAYERS} 名队员`);
-      if (players.some((player) => player.name === normalized)) throw new Error('队员昵称不能重复');
+      if (players.some((player) => player.name.toLocaleLowerCase() === normalized.toLocaleLowerCase())) throw new Error('队员昵称不能重复');
       const p = await apiAddPlayer(room.id, normalized);
       setPlayers((prev) => [...prev, p]);
       return p;
@@ -266,7 +286,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     async (id: string, name: string) => {
       const normalized = name.trim();
       if (!normalized) return;
-      if (players.some((player) => player.id !== id && player.name === normalized)) {
+      if (players.some((player) => player.id !== id && player.name.toLocaleLowerCase() === normalized.toLocaleLowerCase())) {
         throw new Error('队员昵称不能重复');
       }
       await apiRenamePlayer(id, normalized);
@@ -289,8 +309,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
 
   const commitGame = useCallback(
     async (game: Omit<Game, 'id' | 'playedAt'>) => {
-      if (!room) throw new Error('尚未进入房间');
-      await insertGame(room.id, game);
+      const active = matches.find((match) => match.status === 'active');
+      if (!room || !active) throw new Error('当前场次不可用');
+      await insertGame(room.id, active.id, game);
       // 清空草稿，准备连录下一局（保留参战人员）
       const reset: DraftPayload = {
         participantIds: game.participantIds,
@@ -298,26 +319,38 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         winnerIds: [],
       };
       await apiSaveDraft(room.id, reset, meId ?? 'system');
-      // 房间只保留最近 5 场，避免历史无限增长。
-      const allGames = await listGames(room.id);
-      const staleGames = allGames
-        .sort((a, b) => b.playedAt.localeCompare(a.playedAt))
-        .slice(5);
-      await Promise.all(staleGames.map((stale) => deleteGameRow(stale.id)));
-      const [g, d] = await Promise.all([listGames(room.id), getDraft(room.id)]);
+      const [g, d] = await Promise.all([listGames(room.id, active.id), getDraft(room.id)]);
       setGames(g);
       setDraft(d);
     },
-    [room, meId],
+    [room, meId, matches],
   );
 
   const removeGame = useCallback(
     async (id: string) => {
       await deleteGameRow(id);
-      if (room) setGames(await listGames(room.id));
+      const active = matches.find((match) => match.status === 'active');
+      if (room && active) setGames(await listGames(room.id, active.id));
     },
-    [room],
+    [room, matches],
   );
+
+  const endCurrentMatch = useCallback(async () => {
+    if (!room) throw new Error('尚未进入房间');
+    const active = matches.find((match) => match.status === 'active');
+    if (!active) throw new Error('当前没有进行中的场次');
+    await apiEndMatch(active.id);
+    const next = await apiCreateMatch(room.id, `第 ${matches.length + 1} 场`);
+    const reset: DraftPayload = {
+      participantIds: players.map((player) => player.id),
+      kills: Object.fromEntries(players.map((player) => [player.id, 0])),
+      winnerIds: [],
+    };
+    await apiSaveDraft(room.id, reset, meId ?? 'system');
+    setMatches((prev) => [next, ...prev.map((match) => match.id === active.id ? { ...match, status: 'ended' as const, endedAt: new Date().toISOString() } : match)]);
+    setGames([]);
+    setDraft(reset);
+  }, [room, matches, players, meId, setDraft]);
 
   const updateDraft = useCallback(
     async (updater: (prev: DraftPayload) => DraftPayload) => {
@@ -348,11 +381,14 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       room,
       players,
       games,
+      matches,
+      currentMatch: matches.find((match) => match.status === 'active') ?? null,
       draft,
       meId,
       createRoom,
       joinRoom,
       leaveRoom,
+      endCurrentMatch,
       setMe,
       addPlayer,
       renamePlayer,
@@ -368,6 +404,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       room,
       players,
       games,
+      matches,
       draft,
       meId,
       createRoom,

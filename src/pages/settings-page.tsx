@@ -16,21 +16,25 @@ import { useAppStore } from '../store/app-store';
 import { useToast } from '../components/toast';
 import { useConfirm } from '../components/confirm-dialog';
 import { formatDateTime } from '../lib/format';
+import { addGlobalPlayer } from '../lib/supabase';
 
 export function SettingsPage() {
   const {
     room,
     players,
     games,
+    currentMatch,
     addPlayer,
     renamePlayer,
     removePlayer,
     leaveRoom,
+    endCurrentMatch,
   } = useAppStore();
   const toast = useToast();
   const confirm = useConfirm();
 
   const [newName, setNewName] = useState('');
+  const [saveAsGlobal, setSaveAsGlobal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [copied, setCopied] = useState(false);
@@ -44,8 +48,11 @@ export function SettingsPage() {
     if (!name) return;
     try {
       await addPlayer(name);
+      if (saveAsGlobal) {
+        try { await addGlobalPlayer(name); } catch { /* 已存在于全局库时无需重复保存 */ }
+      }
       setNewName('');
-      toast.success(`队员「${name}」已加入房间并实时同步`);
+      toast.success(saveAsGlobal ? `队员「${name}」已加入房间并保存到全局库` : `队员「${name}」已加入房间并实时同步`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '添加失败');
     }
@@ -141,6 +148,22 @@ export function SettingsPage() {
               <div className="text-xs text-ink-muted">房间名称</div>
               <div className="mt-0.5 text-lg font-bold">{room?.name}</div>
             </div>
+            <div className="rounded-lg border border-primary/25 bg-primary/[0.06] px-3 py-2">
+              <div className="text-xs text-ink-muted">当前场次</div>
+              <div className="mt-0.5 flex items-center justify-between gap-3">
+                <span className="font-semibold">{currentMatch?.name ?? '未创建场次'} · {games.length} 局</span>
+                <button
+                  type="button"
+                  className="tac-btn h-8 px-3 text-xs text-primary"
+                  disabled={!currentMatch}
+                  onClick={async () => {
+                    const ok = await confirm({ title: '结束当前场次？', message: '当前场次将归档到历史场次；排行榜与对局记录会从新场次重新开始。', confirmText: '结束并新建', cancelText: '取消', danger: true });
+                    if (!ok) return;
+                    try { await endCurrentMatch(); toast.success('当前场次已归档，已开启新场次'); } catch (e) { toast.error(e instanceof Error ? e.message : '结束场次失败'); }
+                  }}
+                >结束场次</button>
+              </div>
+            </div>
             <div>
               <div className="text-xs text-ink-muted">房间码（发给队友加入）</div>
               <div className="mt-1 flex items-center gap-2">
@@ -176,12 +199,14 @@ export function SettingsPage() {
               onClick={async () => {
                 const ok = await confirm({
                   title: '退出当前房间？',
-                  message: '退出后只是在本机离开房间，云端战绩不会删除；之后可用房间码重新加入。',
-                  confirmText: '退出房间',
+                  message: '退出将清空该房间的当前场次、历史场次和所有对局信息，所有成员都将无法再加入。',
+                  confirmText: '清空并退出',
                   cancelText: '取消',
                   danger: true,
                 });
-                if (ok) leaveRoom();
+                if (ok) {
+                  try { await leaveRoom(); toast.success('房间与所有场次已清空'); } catch (e) { toast.error(e instanceof Error ? e.message : '退出失败'); }
+                }
               }}
               className="tac-btn h-10 w-full text-loss"
             >
@@ -212,6 +237,10 @@ export function SettingsPage() {
               <Plus size={16} /> 添加
             </button>
           </div>
+          <label className="-mt-1 mb-3 flex items-center gap-2 text-xs text-ink-muted">
+            <input type="checkbox" checked={saveAsGlobal} onChange={(e) => setSaveAsGlobal(e.target.checked)} />
+            同时保存为全局人员（之后建房可直接选取）
+          </label>
 
           <div className="space-y-2">
             {players.map((p) => (

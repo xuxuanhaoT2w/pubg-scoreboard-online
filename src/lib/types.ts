@@ -5,6 +5,7 @@ export interface Player {
 
 export interface Game {
   id: string;
+  matchId?: string;
   playedAt: string;
   participantIds: string[];
   /** playerId -> 本局击杀数 */
@@ -13,6 +14,15 @@ export interface Game {
   winnerIds: string[];
   /** playerId -> 本局得分（零和） */
   scores: Record<string, number>;
+}
+
+export interface Match {
+  id: string;
+  roomId: string;
+  name: string;
+  status: 'active' | 'ended';
+  startedAt: string;
+  endedAt: string | null;
 }
 
 export interface PlayerStats {

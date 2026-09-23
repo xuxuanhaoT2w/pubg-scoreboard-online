@@ -12,7 +12,7 @@ interface LeaderboardPageProps {
 const RANK_BADGE = ['text-gain', 'text-ink-muted', 'text-[#d09a5d]'];
 
 export function LeaderboardPage({ onNavigate }: LeaderboardPageProps) {
-  const { players, games } = useAppStore();
+  const { players, games, currentMatch } = useAppStore();
 
   const stats = useMemo(() => computeStats(players, games), [players, games]);
 
@@ -51,7 +51,7 @@ export function LeaderboardPage({ onNavigate }: LeaderboardPageProps) {
         <h1 className="font-display text-2xl font-bold tracking-wide">
           总分排行榜
           <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
-            SCOREBOARD · 跨局累计
+            {currentMatch?.name ?? '当前场次'} · 场内累计
           </span>
         </h1>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">

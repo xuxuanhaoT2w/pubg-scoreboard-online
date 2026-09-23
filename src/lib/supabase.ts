@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Player, Game } from './types';
+import type { Player, Game, Match } from './types';
 import { publicSupabaseConfig } from './public-supabase-config';
 
 // ---------- 数据库行类型（snake_case，与表结构对应） ----------
@@ -22,6 +22,16 @@ export interface GameRow {
   room_id: string;
   data: Omit<Game, 'id' | 'playedAt'>;
   played_at: string;
+  match_id: string | null;
+}
+
+export interface MatchRow {
+  id: string;
+  room_id: string;
+  name: string;
+  status: 'active' | 'ended';
+  started_at: string;
+  ended_at: string | null;
 }
 
 export interface DraftRow {
@@ -130,6 +140,33 @@ export async function getRoomById(id: string): Promise<RoomRow | null> {
   return (data as RoomRow) ?? null;
 }
 
+export async function deleteRoom(roomId: string): Promise<void> {
+  const { error } = await db().from('rooms').delete().eq('id', roomId);
+  if (error) throw error;
+}
+
+// ---------- 全局人员库 ----------
+export async function listGlobalPlayers(): Promise<Player[]> {
+  const { data, error } = await db().from('global_players').select('*').order('created_at');
+  if (error) throw error;
+  return (data as Array<{ id: string; name: string }>).map((row) => ({ id: row.id, name: row.name }));
+}
+
+export async function addGlobalPlayer(name: string): Promise<Player> {
+  const { data, error } = await db()
+    .from('global_players')
+    .insert({ name: name.trim() })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return { id: data.id, name: data.name };
+}
+
+export async function deleteGlobalPlayer(id: string): Promise<void> {
+  const { error } = await db().from('global_players').delete().eq('id', id);
+  if (error) throw error;
+}
+
 // ---------- 队员 ----------
 export async function listPlayers(roomId: string): Promise<Player[]> {
   const supabase = db();
@@ -167,25 +204,59 @@ export async function deletePlayer(playerId: string): Promise<void> {
 }
 
 // ---------- 对局 ----------
-export async function listGames(roomId: string): Promise<Game[]> {
-  const supabase = db();
-  const { data, error } = await supabase
+export async function listGames(roomId: string, matchId?: string): Promise<Game[]> {
+  let query = db()
     .from('games')
     .select('*')
     .eq('room_id', roomId)
     .order('played_at', { ascending: false });
+  if (matchId) query = query.eq('match_id', matchId);
+  const { data, error } = await query;
   if (error) throw error;
   return (data as GameRow[]).map(rowToGame);
 }
 
-export async function insertGame(roomId: string, game: Omit<Game, 'id' | 'playedAt'>): Promise<Game> {
+export async function insertGame(
+  roomId: string,
+  matchId: string,
+  game: Omit<Game, 'id' | 'playedAt' | 'matchId'>,
+): Promise<Game> {
   const { data, error } = await db()
     .from('games')
-    .insert({ room_id: roomId, data: game })
+    .insert({ room_id: roomId, match_id: matchId, data: game })
     .select('*')
     .single();
   if (error) throw error;
   return rowToGame(data as GameRow);
+}
+
+// ---------- 场次 ----------
+export async function createMatch(roomId: string, name: string): Promise<Match> {
+  const { data, error } = await db()
+    .from('matches')
+    .insert({ room_id: roomId, name })
+    .select('*')
+    .single();
+  if (error) throw error;
+  return rowToMatch(data as MatchRow);
+}
+
+export async function listMatches(roomId: string): Promise<Match[]> {
+  const { data, error } = await db()
+    .from('matches')
+    .select('*')
+    .eq('room_id', roomId)
+    .order('started_at', { ascending: false });
+  if (error) throw error;
+  return (data as MatchRow[]).map(rowToMatch);
+}
+
+export async function endMatch(matchId: string): Promise<void> {
+  const { error } = await db()
+    .from('matches')
+    .update({ status: 'ended', ended_at: new Date().toISOString() })
+    .eq('id', matchId);
+  if (error) throw error;
 }
 
 export async function deleteGameRow(gameId: string): Promise<void> {
@@ -230,7 +301,7 @@ export async function saveDraft(roomId: string, payload: DraftPayload, updatedBy
 // ---------- 实时订阅 ----------
 export function subscribeRoom(
   roomId: string,
-  onChange: (table: 'players' | 'games' | 'drafts') => void,
+  onChange: (table: 'players' | 'games' | 'drafts' | 'matches') => void,
 ): () => void {
   const supabase = db();
   const channel = supabase
@@ -239,6 +310,11 @@ export function subscribeRoom(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` },
       () => onChange('players'),
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'matches', filter: `room_id=eq.${roomId}` },
+      () => onChange('matches'),
     )
     .on(
       'postgres_changes',
@@ -264,10 +340,22 @@ function rowToPlayer(r: PlayerRow): Player {
 function rowToGame(r: GameRow): Game {
   return {
     id: r.id,
+    matchId: r.match_id ?? undefined,
     playedAt: r.played_at,
     participantIds: r.data.participantIds,
     kills: r.data.kills,
     winnerIds: r.data.winnerIds,
     scores: r.data.scores,
+  };
+}
+
+function rowToMatch(r: MatchRow): Match {
+  return {
+    id: r.id,
+    roomId: r.room_id,
+    name: r.name,
+    status: r.status,
+    startedAt: r.started_at,
+    endedAt: r.ended_at,
   };
 }

@@ -1,11 +1,12 @@
 import type { LucideIcon } from 'lucide-react';
-import { Crosshair, History, Settings, Trophy } from 'lucide-react';
+import { Archive, Crosshair, History, Settings, Trophy } from 'lucide-react';
 
-export type TabKey = 'leaderboard' | 'record' | 'history' | 'settings';
+export type TabKey = 'leaderboard' | 'record' | 'history' | 'matches' | 'settings';
 
 const NAV_ITEMS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'leaderboard', label: '排行榜', icon: Trophy },
   { key: 'history', label: '历史', icon: History },
+  { key: 'matches', label: '场次', icon: Archive },
   { key: 'settings', label: '设置', icon: Settings },
 ];
 

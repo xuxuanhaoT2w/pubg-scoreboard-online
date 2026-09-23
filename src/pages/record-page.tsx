@@ -20,7 +20,7 @@ import type { DraftPayload } from '../lib/supabase';
 import type { Game } from '../lib/types';
 
 export function RecordPage() {
-  const { players, games, draft, meId, updateDraft, commitGame } = useAppStore();
+  const { players, games, draft, meId, updateDraft, commitGame, currentMatch } = useAppStore();
   const toast = useToast();
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
@@ -140,7 +140,7 @@ export function RecordPage() {
           <h1 className="font-display text-2xl font-bold tracking-wide">
             记一局
             <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
-              DEPLOY · 多人实时协同
+            {currentMatch?.name ?? '当前场次'} · 多人实时协同
             </span>
           </h1>
           <p className="mt-1 text-xs text-ink-muted">
@@ -367,7 +367,7 @@ export function RecordPage() {
                 <Loader2 size={18} className="animate-spin" />
               ) : (
                 <>
-                  <Swords size={18} /> 保存本局，开启下一场
+                  <Swords size={18} /> 保存本局
                 </>
               )}
             </button>

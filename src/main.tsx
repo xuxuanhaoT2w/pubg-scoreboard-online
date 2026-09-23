@@ -7,6 +7,7 @@ import { NavBar, type TabKey } from './components/nav-bar';
 import { LeaderboardPage } from './pages/leaderboard-page';
 import { RecordPage } from './pages/record-page';
 import { HistoryPage } from './pages/history-page';
+import { MatchesPage } from './pages/matches-page';
 import { SettingsPage } from './pages/settings-page';
 import { LobbyPage } from './pages/lobby-page';
 import { ToastProvider } from './components/toast';
@@ -57,6 +58,7 @@ function App() {
         {tab === 'leaderboard' && <LeaderboardPage onNavigate={setTab} />}
         {tab === 'record' && <RecordPage />}
         {tab === 'history' && <HistoryPage onNavigate={setTab} />}
+        {tab === 'matches' && <MatchesPage />}
         {tab === 'settings' && <SettingsPage />}
       </main>
     </div>
