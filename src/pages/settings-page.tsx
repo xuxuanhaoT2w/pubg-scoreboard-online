@@ -17,8 +17,9 @@ import { useConfirm } from '../components/confirm-dialog';
 import { addGlobalPlayer, deleteGlobalPlayer, listGlobalPlayers } from '../lib/supabase';
 import type { Player } from '../lib/types';
 import { APP_RELEASE } from '../lib/release';
+import type { TabKey } from '../components/nav-bar';
 
-export function SettingsPage() {
+export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void }) {
   const {
     room,
     players,
@@ -228,13 +229,14 @@ export function SettingsPage() {
             <div className="rounded-lg border border-line bg-panel-2 p-3">
               <div className="mb-1 text-xs font-semibold text-ink-muted">房间维护</div>
               <p className="mb-3 text-[11px] leading-relaxed text-ink-muted">退出只会清除本设备的加入状态，房间码、成员、场次和对局会继续保留在云端。</p>
+              <button type="button" className="tac-btn h-10 w-full" onClick={() => onNavigate('room-manager')}>管理全部房间</button>
               <button
                 type="button"
                 onClick={async () => {
                   const ok = await confirm({ title: '退出当前房间？', message: '仅退出本设备，其他成员和房间数据不受影响。之后仍可用相同房间码重新加入。', confirmText: '退出', cancelText: '取消' });
                   if (ok) { try { await leaveRoom(); toast.success('已退出本设备，房间仍在云端保留'); } catch (e) { toast.error(e instanceof Error ? e.message : '退出失败'); } }
                 }}
-                className="tac-btn h-10 w-full"
+                className="tac-btn mt-2 h-10 w-full"
               >
                 <LogOut size={16} /> 退出本设备
               </button>

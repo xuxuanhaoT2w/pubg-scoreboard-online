@@ -9,6 +9,7 @@ import { RecordPage } from './pages/record-page';
 import { HistoryPage } from './pages/history-page';
 import { MatchesPage } from './pages/matches-page';
 import { SettingsPage } from './pages/settings-page';
+import { RoomManagerPage } from './pages/room-manager-page';
 import { LobbyPage } from './pages/lobby-page';
 import { ToastProvider } from './components/toast';
 import { ConfirmProvider } from './components/confirm-dialog';
@@ -66,7 +67,8 @@ function App() {
         {tab === 'record' && <RecordPage />}
         {tab === 'history' && <HistoryPage onNavigate={setTab} />}
         {tab === 'matches' && <MatchesPage />}
-        {tab === 'settings' && <SettingsPage />}
+        {tab === 'settings' && <SettingsPage onNavigate={setTab} />}
+        {tab === 'room-manager' && <RoomManagerPage onNavigate={setTab} />}
       </main>
     </div>
   );

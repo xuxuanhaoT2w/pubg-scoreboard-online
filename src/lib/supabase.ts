@@ -140,9 +140,20 @@ export async function getRoomById(id: string): Promise<RoomRow | null> {
   return (data as RoomRow) ?? null;
 }
 
+export async function listRooms(): Promise<RoomRow[]> {
+  const { data, error } = await db().from('rooms').select('*').order('created_at', { ascending: false });
+  if (error) throw error;
+  return data as RoomRow[];
+}
+
 export async function deleteRoom(roomId: string): Promise<void> {
   const { error } = await db().from('rooms').delete().eq('id', roomId);
   if (error) throw error;
+}
+
+export async function deleteAllRooms(): Promise<void> {
+  const rooms = await listRooms();
+  await Promise.all(rooms.map((room) => deleteRoom(room.id)));
 }
 
 // ---------- 全局人员库 ----------

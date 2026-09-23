@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import { Crosshair, History, Settings, Trophy } from 'lucide-react';
 
-export type TabKey = 'leaderboard' | 'record' | 'history' | 'matches' | 'settings';
+export type TabKey = 'leaderboard' | 'record' | 'history' | 'matches' | 'settings' | 'room-manager';
 
 const NAV_ITEMS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'leaderboard', label: '排行榜', icon: Trophy },
