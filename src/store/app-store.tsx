@@ -149,6 +149,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         const inviteCode = query.get('join') || query.get('c');
         if (inviteCode) {
           clearLocalRoomCache();
+          setError(null);
           if (alive) setStatus('no-room');
           return;
         }
@@ -244,10 +245,16 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const joinRoom = useCallback(
     async (code: string) => {
       setError(null);
-      const r = await getRoomByCode(code);
-      await loadRoom(r.id);
-      setRoom(r);
-      setStatus('ready');
+      try {
+        const r = await getRoomByCode(code);
+        await loadRoom(r.id);
+        setRoom(r);
+        setStatus('ready');
+      } catch (e) {
+        setError(e instanceof Error ? e.message : '加入房间失败');
+        setStatus('no-room');
+        throw e;
+      }
     },
     [loadRoom],
   );
