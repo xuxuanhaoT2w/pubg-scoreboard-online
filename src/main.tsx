@@ -78,7 +78,7 @@ createRoot(document.getElementById('root')!).render(
 // PWA Service Worker（仅生产环境注册，离线 App Shell）
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
       /* SW 注册失败不影响使用 */
     });
   });

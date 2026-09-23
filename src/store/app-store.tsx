@@ -87,8 +87,20 @@ function clearLocalRoomCache(): void {
     Object.keys(localStorage)
       .filter((key) => key === ROOM_KEY || key.startsWith('pubg.me.'))
       .forEach((key) => localStorage.removeItem(key));
+    Object.keys(sessionStorage)
+      .filter((key) => key.startsWith('pubg.'))
+      .forEach((key) => sessionStorage.removeItem(key));
   } catch {
     /* ignore */
+  }
+}
+
+function clearInviteClientCache(): void {
+  clearLocalRoomCache();
+  if ('caches' in window) {
+    void caches.keys().then((keys) => Promise.all(
+      keys.filter((key) => key.startsWith('pubg-scoreboard')).map((key) => caches.delete(key)),
+    ));
   }
 }
 
@@ -158,7 +170,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         const query = new URLSearchParams(window.location.search);
         const inviteCode = query.get('join') || query.get('c');
         if (inviteCode) {
-          clearLocalRoomCache();
+          clearInviteClientCache();
           setError(null);
           if (alive) setStatus('no-room');
           return;
@@ -256,7 +268,10 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     async (code: string) => {
       setError(null);
       try {
-        const r = await getRoomByCode(code);
+        clearInviteClientCache();
+        const normalizedCode = code.trim().toUpperCase();
+        if (!normalizedCode) throw new Error('请提供有效的房间码或邀请链接');
+        const r = await getRoomByCode(normalizedCode);
         await loadRoom(r.id);
         setRoom(r);
         setStatus('ready');

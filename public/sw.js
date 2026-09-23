@@ -1,6 +1,6 @@
 /* 开黑计分板 Service Worker — 离线缓存 App Shell */
-const CACHE_VERSION = 'pubg-scoreboard-v1';
-const APP_SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+const CACHE_VERSION = 'pubg-scoreboard-v2';
+const APP_SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -36,10 +36,10 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((res) => {
           const copy = res.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put('/', copy));
+          caches.open(CACHE_VERSION).then((cache) => cache.put('./', copy));
           return res;
         })
-        .catch(() => caches.match('/').then((cached) => cached || caches.match('/index.html'))),
+        .catch(() => caches.match('./').then((cached) => cached || caches.match('./index.html'))),
     );
     return;
   }
