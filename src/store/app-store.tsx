@@ -81,6 +81,16 @@ function readRoomId(): string | null {
   }
 }
 
+function clearLocalRoomCache(): void {
+  try {
+    Object.keys(localStorage)
+      .filter((key) => key === ROOM_KEY || key.startsWith('pubg.me.'))
+      .forEach((key) => localStorage.removeItem(key));
+  } catch {
+    /* ignore */
+  }
+}
+
 export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<RoomStatus>('checking');
   const [error, setError] = useState<string | null>(null);
@@ -134,6 +144,14 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         await initSupabase();
         if (!alive) return;
         setSupabaseOk(true);
+        // 从邀请链接进入时，必须先脱离本机上一次缓存的房间，避免被旧房间拦截。
+        const query = new URLSearchParams(window.location.search);
+        const inviteCode = query.get('join') || query.get('c');
+        if (inviteCode) {
+          clearLocalRoomCache();
+          if (alive) setStatus('no-room');
+          return;
+        }
         const savedId = readRoomId();
         if (savedId) {
           const existing = await getRoomById(savedId);
@@ -236,13 +254,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
 
   const leaveRoom = useCallback(async () => {
     if (room) await apiDeleteRoom(room.id);
-    try {
-      Object.keys(localStorage)
-        .filter((key) => key === ROOM_KEY || key.startsWith('pubg.me.'))
-        .forEach((key) => localStorage.removeItem(key));
-    } catch {
-      /* ignore */
-    }
+    clearLocalRoomCache();
     roomIdRef.current = null;
     setRoom(null);
     setPlayers([]);
