@@ -7,7 +7,7 @@ const NAV_ITEMS: { key: TabKey; label: string; icon: LucideIcon }[] = [
   { key: 'leaderboard', label: '排行榜', icon: Trophy },
   { key: 'history', label: '历史', icon: History },
   { key: 'matches', label: '场次', icon: Archive },
-  { key: 'settings', label: '设置', icon: Settings },
+  { key: 'settings', label: '房间', icon: Settings },
 ];
 
 interface NavBarProps {

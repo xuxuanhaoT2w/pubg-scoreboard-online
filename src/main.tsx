@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Crosshair, Loader2 } from 'lucide-react';
+import { Crosshair, Loader2, Settings } from 'lucide-react';
 import './index.css';
 import { RoomStoreProvider, useAppStore } from './store/app-store';
 import { NavBar, type TabKey } from './components/nav-bar';
@@ -15,7 +15,7 @@ import { ConfirmProvider } from './components/confirm-dialog';
 import { IdentityBar } from './components/identity-bar';
 
 function App() {
-  const { status, joinRoom, ready } = useAppStore();
+  const { status, joinRoom, ready, currentMatch, games } = useAppStore();
   const [tab, setTab] = useState<TabKey>('record');
 
   // 支持通过分享链接自动加入：?join=房间码
@@ -53,6 +53,16 @@ function App() {
   return (
     <div className="min-h-screen">
       <NavBar active={tab} onChange={setTab} />
+      <div className="border-b border-line bg-panel-2/60">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2 sm:px-6">
+          <div className="min-w-0 flex-1">
+            <span className="text-[10px] font-semibold tracking-wider text-ink-muted">当前场次</span>
+            <div className="truncate text-sm font-bold text-primary">{currentMatch?.name ?? '未创建场次'} <span className="font-normal text-ink-muted">· {games.length} 局</span></div>
+          </div>
+          <button type="button" className="tac-btn tac-btn-primary h-8 shrink-0 px-3 text-xs" onClick={() => setTab('record')}><Crosshair size={14} /> 记一局</button>
+          <button type="button" className="tac-btn h-8 shrink-0 px-3 text-xs" onClick={() => setTab('settings')}><Settings size={14} /><span className="hidden sm:inline">房间管理</span></button>
+        </div>
+      </div>
       {tab === 'record' && <IdentityBar />}
       <main className="mx-auto w-full max-w-6xl">
         {tab === 'leaderboard' && <LeaderboardPage onNavigate={setTab} />}
