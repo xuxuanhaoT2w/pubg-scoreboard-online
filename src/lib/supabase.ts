@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Player, Game } from './types';
+import { publicSupabaseConfig } from './public-supabase-config';
 
 // ---------- 数据库行类型（snake_case，与表结构对应） ----------
 export interface RoomRow {
@@ -43,15 +44,13 @@ export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winner
 let client: SupabaseClient | null = null;
 let clientConfig: { url: string; anonKey: string } | null = null;
 
-/** 从后端拉取 Supabase 公开配置并创建客户端（anon key，受 RLS 约束） */
+/**
+ * 直接使用公开 publishable key，兼容 GitHub Pages 等纯静态托管。
+ * 公开 key 不包含服务端权限，所有数据访问仍由 Supabase RLS 控制。
+ */
 export async function initSupabase(): Promise<SupabaseClient> {
   if (client) return client;
-  const resp = await fetch('/api/supabase-config');
-  const json = await resp.json();
-  if (!resp.ok || !json.enabled || !json.url || !json.anonKey) {
-    throw new Error(json.message || '实时同步服务不可用');
-  }
-  clientConfig = { url: json.url, anonKey: json.anonKey };
+  clientConfig = { url: publicSupabaseConfig.url, anonKey: publicSupabaseConfig.publishableKey };
   client = createClient(clientConfig.url, clientConfig.anonKey, {
     auth: { persistSession: false },
     realtime: { params: { eventsPerSecond: 20 } },
