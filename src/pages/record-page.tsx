@@ -377,12 +377,13 @@ export function RecordPage() {
           </div>
 
           {/* 当前累计榜（连录时可见叠加效果） */}
-          <div className="tac-card p-4">
-            <div className="mb-2 flex items-center gap-2">
+          <div className="tac-card order-first border border-primary/50 bg-primary/[0.06] p-4">
+            <div className="mb-3 flex items-center gap-2">
               <Users size={15} className="text-primary" />
-              <h2 className="font-display text-sm font-bold tracking-wider">当前累计总分</h2>
+              <h2 className="font-display text-base font-bold tracking-wider text-primary">当前累计总分</h2>
+              <span className="ml-auto text-[10px] font-semibold text-ink-muted">本场排行</span>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               {participantIds
                 .slice()
                 .sort((a, b) => {
@@ -393,13 +394,13 @@ export function RecordPage() {
                 .map((p, i) => {
                   const total = statsMap.get(p.id)?.totalScore ?? 0;
                   return (
-                    <div key={p.id} className="flex items-center justify-between text-sm">
+                    <div key={p.id} className="flex items-center justify-between rounded-lg bg-panel/80 px-2.5 py-1.5 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
                         <span className="num w-4 text-center text-xs text-ink-muted">{i + 1}</span>
                         <span className="truncate">{p.name}</span>
                       </span>
                       <span
-                        className={`num font-bold tabular-nums ${
+                        className={`num text-base font-bold tabular-nums ${
                           total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
                         }`}
                       >
