@@ -71,13 +71,8 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
       <header className="mb-5 flex items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold tracking-wide">
-          历史战绩
-          <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
-            MATCH LOG · 共 {sorted.length} 局
-          </span>
-        </h1>
-        <button type="button" className="tac-btn h-9 px-3 text-sm text-loss" onClick={() => void handleClearAll()}><Trash2 size={15} /> 清空本场</button>
+        <div><h1 className="font-display text-2xl font-bold tracking-wide">历史战绩</h1><span className="text-xs text-ink-muted">本场共 {sorted.length} 局</span></div>
+        <div className="flex gap-2"><button type="button" className="tac-btn h-9 px-3 text-sm" onClick={() => onNavigate('matches')}>场次归档</button><button type="button" className="tac-btn h-9 px-3 text-sm text-loss" onClick={() => void handleClearAll()}><Trash2 size={15} /> 清空本场</button></div>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
