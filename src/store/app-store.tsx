@@ -37,6 +37,7 @@ export type RoomStatus = 'checking' | 'no-room' | 'ready';
 interface RoomStore {
   status: RoomStatus;
   ready: boolean;
+  serviceUnavailable: boolean;
   error: string | null;
   room: RoomRow | null;
   players: Player[];
@@ -396,6 +397,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     () => ({
       status,
       ready: status === 'ready',
+      serviceUnavailable: !supabaseOk,
       error,
       room,
       players,
