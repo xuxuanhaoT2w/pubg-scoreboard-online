@@ -16,6 +16,7 @@ import { useToast } from '../components/toast';
 import { useConfirm } from '../components/confirm-dialog';
 import { addGlobalPlayer, deleteGlobalPlayer, listGlobalPlayers } from '../lib/supabase';
 import type { Player } from '../lib/types';
+import { APP_RELEASE } from '../lib/release';
 
 export function SettingsPage() {
   const {
@@ -139,7 +140,7 @@ export function SettingsPage() {
   };
 
   const shareUrl = room
-    ? `${window.location.origin}${window.location.pathname}?join=${room.join_code}`
+    ? `${window.location.origin}${window.location.pathname}?join=${room.join_code}&v=${APP_RELEASE}`
     : '';
 
   const handleCopy = async (text: string, label: string) => {

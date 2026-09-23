@@ -75,11 +75,16 @@ createRoot(document.getElementById('root')!).render(
   </RoomStoreProvider>,
 );
 
-// PWA Service Worker（仅生产环境注册，离线 App Shell）
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
+// 早期版本的离线缓存可能让设备长期停留在旧代码；上线多人协作后改为始终使用网络最新版本。
+if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => {
-      /* SW 注册失败不影响使用 */
-    });
+    void navigator.serviceWorker.getRegistrations().then((registrations) =>
+      Promise.all(registrations.map((registration) => registration.unregister())),
+    );
+    if ('caches' in window) {
+      void caches.keys().then((keys) => Promise.all(
+        keys.filter((key) => key.startsWith('pubg-scoreboard')).map((key) => caches.delete(key)),
+      ));
+    }
   });
 }
