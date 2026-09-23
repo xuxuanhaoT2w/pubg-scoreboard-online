@@ -94,6 +94,11 @@ export function SettingsPage() {
   const handleAddGlobalToRoom = async (id: string) => {
     const player = globalPlayers.find((item) => item.id === id);
     if (!player) return;
+    const normalizedName = player.name.trim().toLocaleLowerCase();
+    if (players.some((item) => item.name.trim().toLocaleLowerCase() === normalizedName)) {
+      toast.success(`「${player.name}」已在当前房间`);
+      return;
+    }
     try {
       await addPlayer(player.name);
       toast.success(`「${player.name}」已加入房间`);
@@ -271,7 +276,10 @@ export function SettingsPage() {
           </div>
           <select className="tac-input mb-3 h-10 text-sm" defaultValue="" onChange={(e) => { if (e.target.value) { void handleAddGlobalToRoom(e.target.value); e.currentTarget.value = ''; } }}>
             <option value="">从全局人员库添加</option>
-            {globalPlayers.filter((globalPlayer) => !players.some((player) => player.name.toLocaleLowerCase() === globalPlayer.name.toLocaleLowerCase())).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}
+            {globalPlayers.map((player) => {
+              const joined = players.some((roomPlayer) => roomPlayer.name.trim().toLocaleLowerCase() === player.name.trim().toLocaleLowerCase());
+              return <option key={player.id} value={player.id} disabled={joined}>{player.name}{joined ? '（已加入）' : ''}</option>;
+            })}
           </select>
           <div className="space-y-2">
             {players.map((p) => (
