@@ -1,22 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Check,
   Copy,
-  Download,
   LogOut,
   Pencil,
   Plus,
   RefreshCw,
   Share2,
   Trash2,
-  Trophy,
   Users,
   X,
 } from 'lucide-react';
 import { useAppStore } from '../store/app-store';
 import { useToast } from '../components/toast';
 import { useConfirm } from '../components/confirm-dialog';
-import { formatDateTime } from '../lib/format';
 import { addGlobalPlayer, deleteGlobalPlayer, listGlobalPlayers } from '../lib/supabase';
 import type { Player } from '../lib/types';
 
@@ -37,13 +34,11 @@ export function SettingsPage() {
   const confirm = useConfirm();
 
   const [newName, setNewName] = useState('');
-  const [saveAsGlobal, setSaveAsGlobal] = useState(false);
   const [globalPlayers, setGlobalPlayers] = useState<Player[]>([]);
   const [globalName, setGlobalName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [copied, setCopied] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
 
   const playerGameCount = (id: string): number =>
     games.filter((g) => g.participantIds.includes(id)).length;
@@ -88,11 +83,8 @@ export function SettingsPage() {
     if (!name) return;
     try {
       await addPlayer(name);
-      if (saveAsGlobal) {
-        try { await addGlobalPlayer(name); } catch { /* 已存在于全局库时无需重复保存 */ }
-      }
       setNewName('');
-      toast.success(saveAsGlobal ? `队员「${name}」已加入房间并保存到全局库` : `队员「${name}」已加入房间并实时同步`);
+      toast.success(`队员「${name}」已加入房间并实时同步`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : '添加失败');
     }
@@ -148,24 +140,6 @@ export function SettingsPage() {
     } catch {
       toast.error('复制失败，请手动选择复制');
     }
-  };
-
-  const handleExport = () => {
-    const payload = {
-      app: 'pubg-scoreboard',
-      exportedAt: new Date().toISOString(),
-      room: room ? { name: room.name, joinCode: room.join_code } : null,
-      players,
-      games,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `pubg-room-${room?.join_code ?? 'backup'}-${formatDateTime(new Date()).replace(/[\s:]/g, '-')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('备份文件已下载');
   };
 
   return (
@@ -283,11 +257,6 @@ export function SettingsPage() {
               <Plus size={16} /> 添加
             </button>
           </div>
-          <label className="-mt-1 mb-3 flex items-center gap-2 text-xs text-ink-muted">
-            <input type="checkbox" checked={saveAsGlobal} onChange={(e) => setSaveAsGlobal(e.target.checked)} />
-            同时保存为全局人员（之后建房可直接选取）
-          </label>
-
           <div className="space-y-2">
             {players.map((p) => (
               <div
@@ -379,54 +348,6 @@ export function SettingsPage() {
           </div>
         </section>
 
-        {/* 数据备份 */}
-        <section className="tac-card clip-br p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-display text-base font-bold">
-            <Download size={17} className="text-primary" /> 数据备份
-          </h2>
-          <p className="mb-4 text-sm leading-relaxed text-ink-muted">
-            战绩已实时保存在云端房间中，所有成员共享同一份数据。你也可以导出本房间 JSON
-            存档（用于本地留存或截图核对）。
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="tac-btn h-11 flex-1" onClick={handleExport}>
-              <Download size={16} /> 导出 JSON 存档
-            </button>
-          </div>
-          <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" />
-        </section>
-
-        {/* 规则说明 */}
-        <section className="tac-card clip-bl p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-display text-base font-bold">
-            <Trophy size={17} className="text-primary" /> 计分规则
-          </h2>
-          <div className="space-y-3 text-sm leading-relaxed text-ink-muted">
-            <div>
-              <p className="mb-1 font-semibold text-ink">击杀分</p>
-              <p>
-                n 人参战时，每拿下 1 个人头，击杀者从其他每个参战者身上各得 1 分。
-                标准 4 人队一个人头值 3 分：击杀者 <span className="text-gain">+3</span>，
-                其余 3 人各 <span className="text-loss">-1</span>；不足 4 人时人头分 = 参战人数 -
-                1，始终保持零和。
-              </p>
-            </div>
-            <div>
-              <p className="mb-1 font-semibold text-ink">吃鸡分</p>
-              <p>
-                每名吃鸡者从未吃鸡者身上各得 5 分：吃鸡者 <span className="text-gain">+5×未吃鸡人数</span>
-                ，未吃鸡者 <span className="text-loss">-5×吃鸡人数</span>。多人吃鸡分别结算；
-                全员或无人吃鸡则不触发。
-              </p>
-            </div>
-            <div>
-              <p className="mb-1 font-semibold text-ink">零和与累计</p>
-              <p>
-                每局所有人得分之和恒为 0；总分跨局累计，删除任意一局会自动回滚。
-              </p>
-            </div>
-          </div>
-        </section>
       </div>
     </div>
   );
