@@ -264,6 +264,11 @@ export async function deleteGameRow(gameId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteMatchGames(roomId: string, matchId: string): Promise<void> {
+  const { error } = await db().from('games').delete().eq('room_id', roomId).eq('match_id', matchId);
+  if (error) throw error;
+}
+
 // ---------- 草稿 ----------
 export async function getDraft(roomId: string): Promise<DraftPayload> {
   const supabase = db();

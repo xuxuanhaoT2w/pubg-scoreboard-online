@@ -90,6 +90,17 @@ export function SettingsPage() {
     }
   };
 
+  const handleAddGlobalToRoom = async (id: string) => {
+    const player = globalPlayers.find((item) => item.id === id);
+    if (!player) return;
+    try {
+      await addPlayer(player.name);
+      toast.success(`「${player.name}」已加入房间`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '添加失败');
+    }
+  };
+
   const handleRename = async (id: string) => {
     const name = editValue.trim();
     if (!name) {
@@ -257,6 +268,10 @@ export function SettingsPage() {
               <Plus size={16} /> 添加
             </button>
           </div>
+          <select className="tac-input mb-3 h-10 text-sm" defaultValue="" onChange={(e) => { if (e.target.value) { void handleAddGlobalToRoom(e.target.value); e.currentTarget.value = ''; } }}>
+            <option value="">从全局人员库添加</option>
+            {globalPlayers.filter((globalPlayer) => !players.some((player) => player.name.toLocaleLowerCase() === globalPlayer.name.toLocaleLowerCase())).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}
+          </select>
           <div className="space-y-2">
             {players.map((p) => (
               <div

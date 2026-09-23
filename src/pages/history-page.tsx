@@ -12,7 +12,7 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ onNavigate }: HistoryPageProps) {
-  const { games, removeGame, playerName } = useAppStore();
+  const { games, removeGame, clearCurrentMatchGames, playerName } = useAppStore();
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -38,6 +38,17 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
     }
   };
 
+  const handleClearAll = async () => {
+    const ok = await confirm({ title: '清空本场全部对局？', message: `将永久删除当前场次的 ${sorted.length} 局战绩，并回滚当前排行榜积分。`, confirmText: '全部清空', cancelText: '取消', danger: true });
+    if (!ok) return;
+    try {
+      await clearCurrentMatchGames();
+      toast.success('当前场次对局已全部清空');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '清空失败');
+    }
+  };
+
   if (sorted.length === 0) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-6 text-center">
@@ -59,13 +70,14 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <header className="mb-5">
+      <header className="mb-5 flex items-center justify-between gap-3">
         <h1 className="font-display text-2xl font-bold tracking-wide">
           历史战绩
           <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
             MATCH LOG · 共 {sorted.length} 局
           </span>
         </h1>
+        <button type="button" className="tac-btn h-9 px-3 text-sm text-loss" onClick={() => void handleClearAll()}><Trash2 size={15} /> 清空本场</button>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">

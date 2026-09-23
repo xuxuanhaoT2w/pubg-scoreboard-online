@@ -15,6 +15,7 @@ import {
   createMatch as apiCreateMatch,
   deleteRoom as apiDeleteRoom,
   deleteGameRow,
+  deleteMatchGames,
   endMatch as apiEndMatch,
   deletePlayer as apiDeletePlayer,
   getDraft,
@@ -61,6 +62,7 @@ interface RoomStore {
   // 对局
   commitGame: (game: Omit<Game, 'id' | 'playedAt'>) => Promise<void>;
   removeGame: (id: string) => Promise<void>;
+  clearCurrentMatchGames: () => Promise<void>;
   // 草稿（多人协同当前一局），函数式更新：基于最新草稿计算，避免覆盖他人填写
   updateDraft: (updater: (prev: DraftPayload) => DraftPayload) => Promise<void>;
   // 工具
@@ -393,6 +395,13 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     [room, matches],
   );
 
+  const clearCurrentMatchGames = useCallback(async () => {
+    const active = matches.find((match) => match.status === 'active');
+    if (!room || !active) throw new Error('当前场次不可用');
+    await deleteMatchGames(room.id, active.id);
+    setGames([]);
+  }, [room, matches]);
+
   const endCurrentMatch = useCallback(async () => {
     if (!room) throw new Error('尚未进入房间');
     const active = matches.find((match) => match.status === 'active');
@@ -455,6 +464,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       removePlayer,
       commitGame,
       removeGame,
+      clearCurrentMatchGames,
       updateDraft,
       playerName,
     }),
@@ -477,6 +487,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       removePlayer,
       commitGame,
       removeGame,
+      clearCurrentMatchGames,
       updateDraft,
       playerName,
     ],

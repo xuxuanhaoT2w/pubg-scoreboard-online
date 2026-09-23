@@ -53,7 +53,7 @@ function App() {
   return (
     <div className="min-h-screen">
       <NavBar active={tab} onChange={setTab} />
-      <IdentityBar />
+      {tab === 'record' && <IdentityBar />}
       <main className="mx-auto w-full max-w-6xl">
         {tab === 'leaderboard' && <LeaderboardPage onNavigate={setTab} />}
         {tab === 'record' && <RecordPage />}
