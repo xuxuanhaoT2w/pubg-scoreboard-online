@@ -92,6 +92,15 @@ function clearLocalRoomCache(): void {
   }
 }
 
+function readableError(error: unknown, fallback: string): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message) return message;
+  }
+  return fallback;
+}
+
 export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<RoomStatus>('checking');
   const [error, setError] = useState<string | null>(null);
@@ -252,7 +261,15 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         setRoom(r);
         setStatus('ready');
       } catch (e) {
-        setError(e instanceof Error ? e.message : '加入房间失败');
+        clearLocalRoomCache();
+        roomIdRef.current = null;
+        setRoom(null);
+        setPlayers([]);
+        setGames([]);
+        setMatches([]);
+        setDraft(null);
+        setMeId(null);
+        setError(readableError(e, '无法加入该房间。请确认房间码或邀请链接完整有效。'));
         setStatus('no-room');
         throw e;
       }

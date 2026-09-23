@@ -31,7 +31,7 @@ export function LobbyPage() {
     ...temporaryNames.map((name) => name.trim()).filter(Boolean),
   ], [globalPlayers, selectedIds, temporaryNames]);
   const handleCreate = async () => { setBusy(true); setLocalErr(null); try { await createRoom(roomName, seedNames); } catch (e) { setLocalErr(e instanceof Error ? e.message : '创建失败'); } finally { setBusy(false); } };
-  const handleJoin = async () => { setBusy(true); setLocalErr(null); try { await joinRoom(code); } catch (e) { setLocalErr(e instanceof Error ? e.message : '加入失败'); } finally { setBusy(false); } };
+  const handleJoin = async () => { setBusy(true); setLocalErr(null); try { await joinRoom(code); } catch (e) { const message = e instanceof Error ? e.message : (typeof e === 'object' && e !== null && 'message' in e && typeof (e as { message?: unknown }).message === 'string' ? (e as { message: string }).message : '无法加入该房间。请确认房间码或邀请链接完整有效。'); setLocalErr(message); } finally { setBusy(false); } };
   const addGlobal = async () => { const name = newGlobalName.trim(); if (!name) return; try { await addGlobalPlayer(name); setNewGlobalName(''); await loadGlobalPlayers(); } catch { setLocalErr('名称已存在或保存失败'); } };
   const removeGlobal = async (id: string) => { await deleteGlobalPlayer(id); setGlobalPlayers((prev) => prev.filter((player) => player.id !== id)); setSelectedIds((prev) => prev.filter((item) => item !== id)); };
   const toggleGlobal = (id: string) => setSelectedIds((prev) => prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]);
