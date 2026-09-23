@@ -1,0 +1,26 @@
+{
+  "name": "开黑计分板 · PUBG",
+  "short_name": "开黑计分",
+  "description": "PUBG 固定车队局后零和记账：击杀分 / 吃鸡分，跨局累计总分排行",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0f0c",
+  "theme_color": "#0d0f0c",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

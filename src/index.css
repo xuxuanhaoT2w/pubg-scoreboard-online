@@ -1,0 +1,159 @@
+@import url('https://fonts.googleapis.cn/css2?family=Oswald:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --tabbar-h: 68px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-base text-ink font-body antialiased;
+  background-image:
+    linear-gradient(rgba(245, 166, 35, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(245, 166, 35, 0.025) 1px, transparent 1px);
+  background-size: 28px 28px;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  min-height: 100%;
+}
+
+button {
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+@layer components {
+  .tac-card {
+    @apply rounded-xl border border-line bg-panel;
+    clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px));
+  }
+
+  .tac-chip {
+    @apply flex items-center justify-center gap-1.5 rounded-lg border border-line bg-panel-2 px-3 py-3 text-sm font-bold text-ink-muted transition-colors;
+  }
+
+  .tac-chip-active {
+    @apply border-primary bg-primary/15 text-primary;
+  }
+
+  .tac-btn {
+    @apply flex items-center justify-center rounded-lg font-display font-semibold tracking-wide transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .tac-btn-primary {
+    @apply bg-primary text-black;
+  }
+
+  .tac-btn-primary:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(245, 166, 35, 0.22);
+  }
+
+  .tac-btn-primary:not(:disabled):hover {
+    @apply bg-gain;
+    box-shadow: 0 6px 20px rgba(245, 166, 35, 0.35);
+  }
+
+  .tac-btn-danger {
+    @apply bg-loss text-white;
+  }
+
+  .tac-btn-ghost {
+    @apply border border-line bg-panel-2 text-ink-muted transition-colors hover:border-primary/50 hover:text-ink;
+  }
+
+  .section-title {
+    @apply flex items-center gap-2 font-display text-xs font-semibold uppercase tracking-[0.25em] text-ink-muted;
+  }
+}
+
+@layer components {
+  .kill-input {
+    @apply num flex h-11 items-stretch overflow-hidden rounded-lg border-2 border-line bg-panel-2 transition-colors;
+  }
+  .kill-input:focus-within {
+    @apply border-primary;
+    box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.18);
+  }
+  .kill-btn {
+    @apply flex w-9 shrink-0 items-center justify-center text-ink transition-colors hover:bg-line disabled:opacity-30;
+  }
+  .kill-btn-plus {
+    @apply text-gain;
+  }
+  .kill-num {
+    @apply w-12 bg-base text-center text-xl font-bold text-ink outline-none;
+    -moz-appearance: textfield;
+  }
+  .kill-num::-webkit-outer-spin-button,
+  .kill-num::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .kill-num::placeholder {
+    color: var(--ink-muted, #8a8d7a);
+  }
+}
+
+@layer utilities {
+  .num {
+    @apply font-display tabular-nums;
+  }
+}
+
+@keyframes pulse-num {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-pulse-num {
+  animation: pulse-num 0.18s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out both;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-in 0.2s ease-out both;
+}
