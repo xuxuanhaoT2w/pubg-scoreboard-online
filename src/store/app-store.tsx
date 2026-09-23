@@ -50,6 +50,7 @@ interface RoomStore {
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
   leaveRoom: () => Promise<void>;
+  deleteRoom: () => Promise<void>;
   endCurrentMatch: () => Promise<void>;
   // 身份
   setMe: (playerId: string | null) => void;
@@ -293,7 +294,6 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   );
 
   const leaveRoom = useCallback(async () => {
-    if (room) await apiDeleteRoom(room.id);
     clearLocalRoomCache();
     roomIdRef.current = null;
     setRoom(null);
@@ -303,7 +303,13 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setDraft(null);
     setMeId(null);
     setStatus('no-room');
-  }, [room]);
+  }, []);
+
+  const deleteRoom = useCallback(async () => {
+    if (!room) throw new Error('尚未进入房间');
+    await apiDeleteRoom(room.id);
+    await leaveRoom();
+  }, [room, leaveRoom]);
 
   const setMe = useCallback(
     (playerId: string | null) => {
@@ -441,6 +447,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       createRoom,
       joinRoom,
       leaveRoom,
+      deleteRoom,
       endCurrentMatch,
       setMe,
       addPlayer,
@@ -463,6 +470,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       createRoom,
       joinRoom,
       leaveRoom,
+      deleteRoom,
       setMe,
       addPlayer,
       renamePlayer,

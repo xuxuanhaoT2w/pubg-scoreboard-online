@@ -30,6 +30,7 @@ export function SettingsPage() {
     renamePlayer,
     removePlayer,
     leaveRoom,
+    deleteRoom,
     endCurrentMatch,
   } = useAppStore();
   const toast = useToast();
@@ -233,24 +234,30 @@ export function SettingsPage() {
               队友打开链接会自动进入本房间；也可让队友在首页「输入房间码加入」输入上面 6 位码。
               数据实时云端同步，大家看到的是同一份战绩。
             </p>
-            <button
-              type="button"
-              onClick={async () => {
-                const ok = await confirm({
-                  title: '退出当前房间？',
-                  message: '退出将清空该房间的当前场次、历史场次和所有对局信息，所有成员都将无法再加入。',
-                  confirmText: '清空并退出',
-                  cancelText: '取消',
-                  danger: true,
-                });
-                if (ok) {
-                  try { await leaveRoom(); toast.success('房间与所有场次已清空'); } catch (e) { toast.error(e instanceof Error ? e.message : '退出失败'); }
-                }
-              }}
-              className="tac-btn h-10 w-full text-loss"
-            >
-              <LogOut size={16} /> 退出房间
-            </button>
+            <div className="rounded-lg border border-line bg-panel-2 p-3">
+              <div className="mb-1 text-xs font-semibold text-ink-muted">房间维护</div>
+              <p className="mb-3 text-[11px] leading-relaxed text-ink-muted">退出只会清除本设备的加入状态，房间码、成员、场次和对局会继续保留在云端。</p>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await confirm({ title: '退出当前房间？', message: '仅退出本设备，其他成员和房间数据不受影响。之后仍可用相同房间码重新加入。', confirmText: '退出', cancelText: '取消' });
+                  if (ok) { try { await leaveRoom(); toast.success('已退出本设备，房间仍在云端保留'); } catch (e) { toast.error(e instanceof Error ? e.message : '退出失败'); } }
+                }}
+                className="tac-btn h-10 w-full"
+              >
+                <LogOut size={16} /> 退出本设备
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await confirm({ title: '永久删除房间？', message: '这会永久删除房间码、成员、场次和所有对局，所有设备都无法再加入。', confirmText: '永久删除', cancelText: '取消', danger: true });
+                  if (ok) { try { await deleteRoom(); toast.success('房间已永久删除'); } catch (e) { toast.error(e instanceof Error ? e.message : '删除失败'); } }
+                }}
+                className="tac-btn mt-2 h-9 w-full text-loss"
+              >
+                <Trash2 size={15} /> 永久删除房间
+              </button>
+            </div>
           </div>
         </section>
 
