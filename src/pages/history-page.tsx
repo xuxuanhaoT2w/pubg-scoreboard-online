@@ -12,7 +12,7 @@ interface HistoryPageProps {
 }
 
 export function HistoryPage({ onNavigate }: HistoryPageProps) {
-  const { games, removeGame, clearCurrentMatchGames, playerName } = useAppStore();
+  const { games, matches, removeGame, clearCurrentMatchGames, playerName } = useAppStore();
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -57,13 +57,7 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
         </div>
         <h2 className="font-display text-xl font-semibold">暂无历史记录</h2>
         <p className="mt-2 text-sm text-ink-muted">每局结算后会在这里展示明细，可随时删除回滚</p>
-        <button
-          type="button"
-          className="tac-btn tac-btn-primary mt-6 h-11 px-8"
-          onClick={() => onNavigate('record')}
-        >
-          <Crosshair size={17} /> 去记一局
-        </button>
+        <div className="mt-6 flex gap-2"><button type="button" className="tac-btn tac-btn-primary h-11 px-5" onClick={() => onNavigate('record')}><Crosshair size={17} /> 去记一局</button>{matches.some((match) => match.status === 'ended') && <button type="button" className="tac-btn h-11 px-5" onClick={() => onNavigate('matches')}>查看历史场次</button>}</div>
       </div>
     );
   }
