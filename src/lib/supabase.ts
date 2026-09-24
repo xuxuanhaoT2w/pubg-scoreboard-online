@@ -47,9 +47,10 @@ export interface DraftPayload {
   participantIds: string[];
   kills: Record<string, number>;
   winnerIds: string[];
+  zeroKillsAsOneIds?: string[];
 }
 
-export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winnerIds: [] };
+export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [] };
 
 let client: SupabaseClient | null = null;
 let clientConfig: { url: string; anonKey: string } | null = null;

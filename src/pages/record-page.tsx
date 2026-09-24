@@ -26,7 +26,7 @@ export function RecordPage() {
   const [saving, setSaving] = useState(false);
 
   // 草稿未加载完时显示骨架
-  const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [] };
+  const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [] };
   const participantIds = useMemo(
     () => players.filter((p) => d.participantIds.includes(p.id)),
     [players, d.participantIds],
@@ -35,12 +35,14 @@ export function RecordPage() {
 
   const kills = d.kills ?? {};
   const winnerIds = d.winnerIds ?? [];
-  const totalKills = participantIds.reduce((s, p) => s + (kills[p.id] ?? 0), 0);
+  const zeroKillsAsOneIds = d.zeroKillsAsOneIds ?? [];
+  const effectiveKills = useMemo(() => Object.fromEntries(participantIds.map((player) => [player.id, (kills[player.id] ?? 0) === 0 && zeroKillsAsOneIds.includes(player.id) ? 1 : (kills[player.id] ?? 0)])), [participantIds, kills, zeroKillsAsOneIds]);
+  const totalKills = participantIds.reduce((s, p) => s + (effectiveKills[p.id] ?? 0), 0);
   const w = participantIds.filter((p) => winnerIds.includes(p.id)).length;
 
   const liveScores = useMemo(
-    () => (n >= 2 ? scoreGame(d.participantIds, kills, winnerIds) : {}),
-    [d.participantIds, kills, winnerIds, n],
+    () => (n >= 2 ? scoreGame(d.participantIds, effectiveKills, winnerIds) : {}),
+    [d.participantIds, effectiveKills, winnerIds, n],
   );
   const statsMap = useMemo(() => {
     const arr = computeStats(players, games);
@@ -59,6 +61,7 @@ export function RecordPage() {
           : [...prev.participantIds, id],
         kills: { ...prev.kills, [id]: prev.kills[id] ?? 0 },
         winnerIds: on ? prev.winnerIds.filter((x) => x !== id) : prev.winnerIds,
+        zeroKillsAsOneIds: on ? (prev.zeroKillsAsOneIds ?? []).filter((x) => x !== id) : (prev.zeroKillsAsOneIds ?? []),
       };
     });
 
@@ -83,6 +86,9 @@ export function RecordPage() {
         : [...prev.winnerIds, id],
     }));
 
+  const toggleZeroKillsAsOne = (id: string) =>
+    void updateDraft((prev) => ({ ...prev, zeroKillsAsOneIds: (prev.zeroKillsAsOneIds ?? []).includes(id) ? (prev.zeroKillsAsOneIds ?? []).filter((item) => item !== id) : [...(prev.zeroKillsAsOneIds ?? []), id] }));
+
   const toggleAll = () =>
     void updateDraft((prev) => {
       const allIn = players.length > 0 && players.every((p) => prev.participantIds.includes(p.id));
@@ -94,6 +100,7 @@ export function RecordPage() {
         participantIds: ids,
         kills: Object.fromEntries(ids.map((id) => [id, prev.kills[id] ?? 0])),
         winnerIds: [],
+        zeroKillsAsOneIds: [],
       };
     });
 
@@ -110,6 +117,7 @@ export function RecordPage() {
       ...prev,
       kills: Object.fromEntries(prev.participantIds.map((id) => [id, 0])),
       winnerIds: [],
+      zeroKillsAsOneIds: [],
     }));
     toast.success('当前对局已清理');
   };
@@ -120,7 +128,7 @@ export function RecordPage() {
     try {
       const game: Omit<Game, 'id' | 'playedAt'> = {
         participantIds: d.participantIds,
-        kills,
+        kills: effectiveKills,
         winnerIds,
         scores: liveScores,
       };
@@ -188,6 +196,7 @@ export function RecordPage() {
               const isWinner = winnerIds.includes(p.id);
               const k = kills[p.id] ?? 0;
               const isMe = p.id === meId;
+              const zeroAsOne = zeroKillsAsOneIds.includes(p.id);
               return (
                 <div
                   key={p.id}
@@ -229,6 +238,7 @@ export function RecordPage() {
                           )}
                         </div>
                       )}
+                      <button type="button" disabled={!isIn} onClick={() => toggleZeroKillsAsOne(p.id)} className={`mt-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${zeroAsOne ? 'bg-primary/20 text-primary' : 'bg-panel-2 text-ink-muted'} disabled:opacity-40`}>0=1</button>
                     </div>
                   </div>
 
