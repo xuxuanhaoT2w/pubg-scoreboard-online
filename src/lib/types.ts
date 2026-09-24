@@ -12,8 +12,15 @@ export interface Game {
   kills: Record<string, number>;
   /** 吃鸡玩家 id 列表 */
   winnerIds: string[];
+  /** 本局满足击杀条件后的定向赠分规则 */
+  giftRules?: GiftRule[];
   /** playerId -> 本局得分（零和） */
   scores: Record<string, number>;
+}
+
+export interface GiftRule {
+  fromId: string;
+  toId: string;
 }
 
 export interface Match {

@@ -1,4 +1,4 @@
-import type { Game, Player, PlayerStats } from './types';
+import type { Game, GiftRule, Player, PlayerStats } from './types';
 
 /**
  * 计算一局中每名参战玩家的得分（严格零和）。
@@ -14,6 +14,7 @@ export function scoreGame(
   participantIds: string[],
   kills: Record<string, number>,
   winnerIds: string[],
+  giftRules: GiftRule[] = [],
 ): Record<string, number> {
   const n = participantIds.length;
   const winnerSet = new Set(winnerIds);
@@ -31,6 +32,12 @@ export function scoreGame(
       score += winnerSet.has(id) ? 5 * (n - w) : -5 * w;
     }
     scores[id] = score;
+  }
+  for (const rule of giftRules) {
+    if (rule.fromId === rule.toId || !(rule.fromId in scores) || !(rule.toId in scores)) continue;
+    if ((kills[rule.fromId] ?? 0) < 1) continue;
+    scores[rule.fromId] -= 1;
+    scores[rule.toId] += 1;
   }
   return scores;
 }

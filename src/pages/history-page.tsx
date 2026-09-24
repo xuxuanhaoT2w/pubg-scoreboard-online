@@ -105,6 +105,7 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
                   <Trophy size={13} /> 吃鸡：{winNames.join('、')}
                 </div>
               )}
+              {(game.giftRules?.length ?? 0) > 0 && <div className="border-b border-line/50 px-4 py-1.5 text-xs text-primary">赠分：{game.giftRules!.map((rule) => `${playerName(rule.fromId)} → ${playerName(rule.toId)} +1`).join('；')}</div>}
               <div className="divide-y divide-line/50">
                 {game.participantIds.map((id) => {
                   const score = game.scores[id] ?? 0;

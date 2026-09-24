@@ -152,6 +152,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       kills: Object.fromEntries(Object.entries(d.kills).filter(([id]) => playerIds.has(id))),
       winnerIds: d.winnerIds.filter((id) => playerIds.has(id)),
       zeroKillsAsOneIds: (d.zeroKillsAsOneIds ?? []).filter((id) => playerIds.has(id)),
+      giftRules: (d.giftRules ?? []).filter((rule) => playerIds.has(rule.fromId) && playerIds.has(rule.toId) && rule.fromId !== rule.toId),
     });
     roomIdRef.current = roomId;
     try {

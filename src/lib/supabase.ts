@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Player, Game, Match } from './types';
+import type { Player, Game, GiftRule, Match } from './types';
 import { publicSupabaseConfig } from './public-supabase-config';
 
 // ---------- 数据库行类型（snake_case，与表结构对应） ----------
@@ -48,9 +48,10 @@ export interface DraftPayload {
   kills: Record<string, number>;
   winnerIds: string[];
   zeroKillsAsOneIds?: string[];
+  giftRules?: GiftRule[];
 }
 
-export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [] };
+export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], giftRules: [] };
 
 let client: SupabaseClient | null = null;
 let clientConfig: { url: string; anonKey: string } | null = null;
@@ -362,6 +363,7 @@ function rowToGame(r: GameRow): Game {
     participantIds: r.data.participantIds,
     kills: r.data.kills,
     winnerIds: r.data.winnerIds,
+    giftRules: r.data.giftRules,
     scores: r.data.scores,
   };
 }

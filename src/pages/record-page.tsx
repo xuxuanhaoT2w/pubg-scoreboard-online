@@ -24,9 +24,11 @@ export function RecordPage() {
   const toast = useToast();
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
+  const [giftFromId, setGiftFromId] = useState('');
+  const [giftToId, setGiftToId] = useState('');
 
   // 草稿未加载完时显示骨架
-  const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [] };
+  const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], giftRules: [] };
   const participantIds = useMemo(
     () => players.filter((p) => d.participantIds.includes(p.id)),
     [players, d.participantIds],
@@ -36,13 +38,14 @@ export function RecordPage() {
   const kills = d.kills ?? {};
   const winnerIds = d.winnerIds ?? [];
   const zeroKillsAsOneIds = d.zeroKillsAsOneIds ?? [];
+  const giftRules = d.giftRules ?? [];
   const effectiveKills = useMemo(() => Object.fromEntries(participantIds.map((player) => [player.id, (kills[player.id] ?? 0) === 0 && zeroKillsAsOneIds.includes(player.id) ? 1 : (kills[player.id] ?? 0)])), [participantIds, kills, zeroKillsAsOneIds]);
   const totalKills = participantIds.reduce((s, p) => s + (effectiveKills[p.id] ?? 0), 0);
   const w = participantIds.filter((p) => winnerIds.includes(p.id)).length;
 
   const liveScores = useMemo(
-    () => (n >= 2 ? scoreGame(d.participantIds, effectiveKills, winnerIds) : {}),
-    [d.participantIds, effectiveKills, winnerIds, n],
+    () => (n >= 2 ? scoreGame(d.participantIds, effectiveKills, winnerIds, giftRules) : {}),
+    [d.participantIds, effectiveKills, winnerIds, giftRules, n],
   );
   const statsMap = useMemo(() => {
     const arr = computeStats(players, games);
@@ -62,6 +65,7 @@ export function RecordPage() {
         kills: { ...prev.kills, [id]: prev.kills[id] ?? 0 },
         winnerIds: on ? prev.winnerIds.filter((x) => x !== id) : prev.winnerIds,
         zeroKillsAsOneIds: on ? (prev.zeroKillsAsOneIds ?? []).filter((x) => x !== id) : (prev.zeroKillsAsOneIds ?? []),
+        giftRules: on ? (prev.giftRules ?? []).filter((rule) => rule.fromId !== id && rule.toId !== id) : (prev.giftRules ?? []),
       };
     });
 
@@ -89,6 +93,14 @@ export function RecordPage() {
   const toggleZeroKillsAsOne = (id: string) =>
     void updateDraft((prev) => ({ ...prev, zeroKillsAsOneIds: (prev.zeroKillsAsOneIds ?? []).includes(id) ? (prev.zeroKillsAsOneIds ?? []).filter((item) => item !== id) : [...(prev.zeroKillsAsOneIds ?? []), id] }));
 
+  const addGiftRule = () => {
+    if (!giftFromId || !giftToId || giftFromId === giftToId) return;
+    void updateDraft((prev) => ({ ...prev, giftRules: (prev.giftRules ?? []).some((rule) => rule.fromId === giftFromId && rule.toId === giftToId) ? (prev.giftRules ?? []) : [...(prev.giftRules ?? []), { fromId: giftFromId, toId: giftToId }] }));
+    setGiftFromId(''); setGiftToId('');
+  };
+
+  const removeGiftRule = (fromId: string, toId: string) => void updateDraft((prev) => ({ ...prev, giftRules: (prev.giftRules ?? []).filter((rule) => rule.fromId !== fromId || rule.toId !== toId) }));
+
   const toggleAll = () =>
     void updateDraft((prev) => {
       const allIn = players.length > 0 && players.every((p) => prev.participantIds.includes(p.id));
@@ -101,6 +113,7 @@ export function RecordPage() {
         kills: Object.fromEntries(ids.map((id) => [id, prev.kills[id] ?? 0])),
         winnerIds: [],
         zeroKillsAsOneIds: [],
+        giftRules: [],
       };
     });
 
@@ -118,6 +131,7 @@ export function RecordPage() {
       kills: Object.fromEntries(prev.participantIds.map((id) => [id, 0])),
       winnerIds: [],
       zeroKillsAsOneIds: [],
+      giftRules: [],
     }));
     toast.success('当前对局已清理');
   };
@@ -130,6 +144,7 @@ export function RecordPage() {
         participantIds: d.participantIds,
         kills: effectiveKills,
         winnerIds,
+        giftRules,
         scores: liveScores,
       };
       await commitGame(game);
@@ -174,6 +189,10 @@ export function RecordPage() {
           一键清理
         </button>
       </header>
+
+      <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink-muted">赠分规则</span><span className="text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => setGiftFromId(e.target.value)}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => setGiftToId(e.target.value)}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={addGiftRule}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => removeGiftRule(rule.fromId, rule.toId)}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div>
+      </section>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         {/* 左侧：录入表格 */}
