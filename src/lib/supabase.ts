@@ -66,10 +66,6 @@ export async function initSupabase(): Promise<SupabaseClient> {
   client = createClient(clientConfig.url, clientConfig.anonKey, {
     auth: { persistSession: false },
     realtime: { params: { eventsPerSecond: 20 } },
-    global: {
-      // 房间列表和对局数据必须始终读取云端最新状态，避免设备或代理缓存空列表。
-      fetch: (input, init) => fetch(input, { ...init, cache: 'no-store' }),
-    },
   });
   return client;
 }

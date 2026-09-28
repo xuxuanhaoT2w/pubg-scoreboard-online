@@ -38,7 +38,10 @@ export function LobbyPage() {
       setLocalErr(null);
       setRooms(await listRooms());
     } catch (e) {
-      setLocalErr(e instanceof Error ? `房间加载失败：${e.message}` : '房间加载失败，请检查网络后重试');
+      const message = e instanceof Error ? e.message : '';
+      setLocalErr(/failed to fetch/i.test(message)
+        ? '无法连接云端房间服务。请检查网络是否可访问 Supabase，或改用房间码/邀请链接加入。'
+        : message ? `房间加载失败：${message}` : '房间加载失败，请检查网络后重试');
     } finally {
       setRoomsLoading(false);
     }
