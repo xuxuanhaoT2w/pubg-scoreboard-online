@@ -174,7 +174,7 @@ export function RecordPage() {
         </div>
         <button
           type="button"
-          onClick={toggleAll}
+          onClick={() => { setEditingActivity('正在调整本局参战人员'); toggleAll(); }}
           className="tac-btn h-9 px-4 text-sm"
           disabled={players.length === 0}
         >
@@ -184,7 +184,7 @@ export function RecordPage() {
         </button>
         <button
           type="button"
-          onClick={() => void clearCurrentRound()}
+          onClick={() => { setEditingActivity('正在清理本局数据'); void clearCurrentRound(); }}
           className="tac-btn h-9 px-4 text-sm text-loss"
           disabled={n === 0}
         >
@@ -193,7 +193,7 @@ export function RecordPage() {
       </header>
 
       <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink-muted">赠分规则</span><span className="text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => setGiftFromId(e.target.value)}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => setGiftToId(e.target.value)}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={addGiftRule}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => removeGiftRule(rule.fromId, rule.toId)}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div>
+        <div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink-muted">赠分规则</span><span className="text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div>
       </section>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -230,7 +230,7 @@ export function RecordPage() {
                     <button
                       type="button"
                       aria-label={isIn ? '取消参战' : '参战'}
-                      onClick={() => toggleParticipant(p.id)}
+                      onClick={() => { setEditingActivity(`正在调整 ${p.name} 的参战状态`); toggleParticipant(p.id); }}
                       className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 transition-all ${
                         isIn
                           ? 'border-primary bg-primary text-bg'
@@ -259,7 +259,7 @@ export function RecordPage() {
                           )}
                         </div>
                       )}
-                      <button type="button" disabled={!isIn} onClick={() => toggleZeroKillsAsOne(p.id)} className={`mt-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${zeroAsOne ? 'bg-primary/20 text-primary' : 'bg-panel-2 text-ink-muted'} disabled:opacity-40`}>0=1</button>
+                      <button type="button" disabled={!isIn} onClick={() => { setEditingActivity(`正在设置 ${p.name} 的 0=1 规则`); toggleZeroKillsAsOne(p.id); }} className={`mt-1 rounded px-1.5 py-0.5 text-[10px] font-semibold ${zeroAsOne ? 'bg-primary/20 text-primary' : 'bg-panel-2 text-ink-muted'} disabled:opacity-40`}>0=1</button>
                     </div>
                   </div>
 
@@ -270,7 +270,7 @@ export function RecordPage() {
                         type="button"
                         className="kill-btn"
                         disabled={!isIn || k <= 0}
-                        onClick={() => stepKills(p.id, -1)}
+                        onClick={() => { setEditingActivity(`正在编辑 ${p.name} 的击杀`); stepKills(p.id, -1); }}
                         aria-label="减少击杀"
                       >
                         <Minus size={15} />
@@ -293,7 +293,7 @@ export function RecordPage() {
                         type="button"
                         className="kill-btn kill-btn-plus"
                         disabled={!isIn}
-                        onClick={() => stepKills(p.id, 1)}
+                        onClick={() => { setEditingActivity(`正在编辑 ${p.name} 的击杀`); stepKills(p.id, 1); }}
                         aria-label="增加击杀"
                       >
                         <Plus size={15} />
