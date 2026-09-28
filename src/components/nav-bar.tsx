@@ -61,7 +61,7 @@ export function NavBar({ active, onChange }: NavBarProps) {
             }`}
           >
             <Crosshair size={16} strokeWidth={2.6} />
-            记一局
+            录入对局
           </button>
         </nav>
       </div>

@@ -52,6 +52,12 @@ export function RecordPage() {
     const arr = computeStats(players, games);
     return new Map(arr.map((s) => [s.player.id, s]));
   }, [players, games]);
+  const rankedPlayers = players.filter((player) => (statsMap.get(player.id)?.games ?? 0) > 0);
+  const totalKills = games.reduce(
+    (sum, game) => sum + Object.values(game.kills).reduce((killsSum, kills) => killsSum + kills, 0),
+    0,
+  );
+  const totalWinningGames = games.filter((game) => game.winnerIds.length > 0).length;
 
   const canSave = n >= 2;
 
@@ -159,7 +165,7 @@ export function RecordPage() {
       <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold tracking-wide">
-            记一局
+            录入对局
             <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
             {currentMatch?.name ?? '当前场次'} · 多人实时协同
             </span>
@@ -327,16 +333,18 @@ export function RecordPage() {
           </div>
         </section>
 
-        {/* 右侧：当前累计总分 */}
+        {/* 右侧：当场排行榜 */}
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
           <div className="tac-card order-first border border-primary/50 bg-primary/[0.06] p-4">
             <div className="mb-3 flex items-center gap-2">
               <Users size={15} className="text-primary" />
-              <h2 className="font-display text-base font-bold tracking-wider text-primary">当前累计总分</h2>
-              <span className="ml-auto text-[10px] font-semibold text-ink-muted">本场排行</span>
+              <h2 className="font-display text-base font-bold tracking-wider text-primary">当场排行榜</h2>
+              <span className="ml-auto text-[10px] font-semibold text-ink-muted">
+                {games.length} 局 · {totalKills} 杀 · 总吃鸡局数 {totalWinningGames}
+              </span>
             </div>
             <div className="space-y-1.5">
-              {players
+              {rankedPlayers
                 .slice()
                 .sort((a, b) => {
                   const sa = statsMap.get(a.id)?.totalScore ?? 0;
@@ -362,7 +370,7 @@ export function RecordPage() {
                     </div>
                   );
                 })}
-              {players.length === 0 && <p className="py-2 text-center text-xs text-ink-muted">暂无队员</p>}
+              {rankedPlayers.length === 0 && <p className="py-2 text-center text-xs text-ink-muted">暂无已记分队员</p>}
             </div>
           </div>
         </aside>
