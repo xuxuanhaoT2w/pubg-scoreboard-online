@@ -10,6 +10,8 @@ export interface Game {
   participantIds: string[];
   /** playerId -> 本局击杀数 */
   kills: Record<string, number>;
+  /** 当前场次沿用的 0 杀按 1 杀计算规则 */
+  zeroKillsAsOneIds?: string[];
   /** 吃鸡玩家 id 列表 */
   winnerIds: string[];
   /** 本局满足击杀条件后的定向赠分规则 */

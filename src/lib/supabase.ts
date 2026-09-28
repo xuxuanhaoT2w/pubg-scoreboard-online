@@ -362,6 +362,7 @@ function rowToGame(r: GameRow): Game {
     playedAt: r.played_at,
     participantIds: r.data.participantIds,
     kills: r.data.kills,
+    zeroKillsAsOneIds: r.data.zeroKillsAsOneIds,
     winnerIds: r.data.winnerIds,
     giftRules: r.data.giftRules,
     scores: r.data.scores,

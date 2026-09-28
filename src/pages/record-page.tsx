@@ -112,8 +112,6 @@ export function RecordPage() {
         participantIds: ids,
         kills: Object.fromEntries(ids.map((id) => [id, prev.kills[id] ?? 0])),
         winnerIds: [],
-        zeroKillsAsOneIds: [],
-        giftRules: [],
       };
     });
 
@@ -130,8 +128,6 @@ export function RecordPage() {
       ...prev,
       kills: Object.fromEntries(prev.participantIds.map((id) => [id, 0])),
       winnerIds: [],
-      zeroKillsAsOneIds: [],
-      giftRules: [],
     }));
     toast.success('当前对局已清理');
   };
@@ -143,6 +139,7 @@ export function RecordPage() {
       const game: Omit<Game, 'id' | 'playedAt'> = {
         participantIds: d.participantIds,
         kills: effectiveKills,
+        zeroKillsAsOneIds,
         winnerIds,
         giftRules,
         scores: liveScores,

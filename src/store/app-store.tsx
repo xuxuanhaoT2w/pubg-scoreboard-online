@@ -379,6 +379,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         participantIds: game.participantIds,
         kills: Object.fromEntries(game.participantIds.map((id) => [id, 0])),
         winnerIds: [],
+        zeroKillsAsOneIds: (game.zeroKillsAsOneIds ?? []).filter((id) => game.participantIds.includes(id)),
+        giftRules: game.giftRules ?? [],
       };
       await apiSaveDraft(room.id, reset, meId ?? 'system');
       const [g, d] = await Promise.all([listGames(room.id, active.id), getDraft(room.id)]);
