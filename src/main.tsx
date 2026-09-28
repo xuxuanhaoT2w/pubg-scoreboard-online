@@ -14,6 +14,7 @@ import { LobbyPage } from './pages/lobby-page';
 import { ToastProvider } from './components/toast';
 import { ConfirmProvider } from './components/confirm-dialog';
 import { IdentityBar } from './components/identity-bar';
+import { MemberPresenceBar } from './components/member-presence-bar';
 
 function App() {
   const { status, joinRoom, ready, currentMatch, games, players, onlinePlayerIds, onlineTemporaryCount } = useAppStore();
@@ -62,6 +63,7 @@ function App() {
           <span className="ml-auto flex items-center gap-1.5 text-gain"><span className="h-1.5 w-1.5 rounded-full bg-gain" /> 在线 {onlinePlayerIds.length + onlineTemporaryCount}{(onlinePlayerIds.length > 0 || onlineTemporaryCount > 0) && <span className="hidden sm:inline text-ink-muted">· {[players.filter((player) => onlinePlayerIds.includes(player.id)).map((player) => player.name).join('、'), onlineTemporaryCount > 0 ? `临时用户 ×${onlineTemporaryCount}` : ''].filter(Boolean).join('、')}</span>}</span>
         </div>
       </div>
+      <MemberPresenceBar />
       {tab === 'record' && <IdentityBar />}
       <main className="mx-auto w-full max-w-6xl">
         {tab === 'leaderboard' && <LeaderboardPage onNavigate={setTab} />}
