@@ -16,7 +16,7 @@ import { ConfirmProvider } from './components/confirm-dialog';
 import { IdentityBar } from './components/identity-bar';
 
 function App() {
-  const { status, joinRoom, ready, currentMatch, games, players, onlinePlayerIds } = useAppStore();
+  const { status, joinRoom, ready, currentMatch, games, players, onlinePlayerIds, onlineTemporaryCount } = useAppStore();
   const [tab, setTab] = useState<TabKey>('record');
 
   // 支持通过分享链接自动加入：?join=房间码
@@ -59,7 +59,7 @@ function App() {
           <span className="text-ink-muted">当前场次</span>
           <span className="font-bold text-primary">{currentMatch?.name ?? '未创建场次'}</span>
           <span className="text-ink-muted">· {games.length} 局</span>
-          <span className="ml-auto flex items-center gap-1.5 text-gain"><span className="h-1.5 w-1.5 rounded-full bg-gain" /> 在线 {onlinePlayerIds.length}{onlinePlayerIds.length > 0 && <span className="hidden sm:inline text-ink-muted">· {players.filter((player) => onlinePlayerIds.includes(player.id)).map((player) => player.name).join('、')}</span>}</span>
+          <span className="ml-auto flex items-center gap-1.5 text-gain"><span className="h-1.5 w-1.5 rounded-full bg-gain" /> 在线 {onlinePlayerIds.length + onlineTemporaryCount}{(onlinePlayerIds.length > 0 || onlineTemporaryCount > 0) && <span className="hidden sm:inline text-ink-muted">· {[players.filter((player) => onlinePlayerIds.includes(player.id)).map((player) => player.name).join('、'), onlineTemporaryCount > 0 ? `临时用户 ×${onlineTemporaryCount}` : ''].filter(Boolean).join('、')}</span>}</span>
         </div>
       </div>
       {tab === 'record' && <IdentityBar />}

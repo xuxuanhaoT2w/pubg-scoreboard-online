@@ -353,16 +353,18 @@ export function subscribeRoom(
 export function subscribeRoomPresence(
   roomId: string,
   playerId: string | null,
-  onChange: (playerIds: string[]) => void,
+  onChange: (playerIds: string[], temporaryCount: number) => void,
 ): () => void {
   const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
   const publish = () => {
     const ids = new Set<string>();
+    let temporaryCount = 0;
     Object.values(channel.presenceState()).flat().forEach((item) => {
       const id = (item as { playerId?: unknown }).playerId;
       if (typeof id === 'string') ids.add(id);
+      else temporaryCount += 1;
     });
-    onChange([...ids]);
+    onChange([...ids], temporaryCount);
   };
   channel
     .on('presence', { event: 'sync' }, publish)

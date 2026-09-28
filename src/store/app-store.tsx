@@ -49,6 +49,7 @@ interface RoomStore {
   draft: DraftPayload | null;
   meId: string | null;
   onlinePlayerIds: string[];
+  onlineTemporaryCount: number;
   // 房间
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
@@ -129,6 +130,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const draftRef = useRef<DraftPayload | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
   const [onlinePlayerIds, setOnlinePlayerIds] = useState<string[]>([]);
+  const [onlineTemporaryCount, setOnlineTemporaryCount] = useState(0);
   const roomIdRef = useRef<string | null>(null);
   const [supabaseOk, setSupabaseOk] = useState(false);
 
@@ -238,9 +240,15 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   }, [status, room, matches]);
 
   useEffect(() => {
-    if (status !== 'ready' || !room) { setOnlinePlayerIds([]); return; }
-    return subscribeRoomPresence(room.id, meId, (ids) => {
+    if (status !== 'ready' || !room) {
+      setOnlinePlayerIds([]);
+      setOnlineTemporaryCount(0);
+      return;
+    }
+    setOnlineTemporaryCount(meId ? 0 : 1);
+    return subscribeRoomPresence(room.id, meId, (ids, temporaryCount) => {
       setOnlinePlayerIds([...new Set(meId ? [...ids, meId] : ids)]);
+      setOnlineTemporaryCount(temporaryCount);
     });
   }, [status, room, meId]);
 
@@ -299,6 +307,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         setMatches([]);
         setDraft(null);
         setMeId(null);
+        setOnlinePlayerIds([]);
+        setOnlineTemporaryCount(0);
         setError(readableError(e, '无法加入该房间。请确认房间码或邀请链接完整有效。'));
         setStatus('no-room');
         throw e;
@@ -317,6 +327,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setDraft(null);
     setMeId(null);
     setOnlinePlayerIds([]);
+    setOnlineTemporaryCount(0);
     setStatus('no-room');
   }, []);
 
@@ -330,6 +341,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     (playerId: string | null) => {
       setMeId(playerId);
       setOnlinePlayerIds(playerId ? [playerId] : []);
+      setOnlineTemporaryCount(playerId ? 0 : 1);
       if (room) {
         try {
           if (playerId) localStorage.setItem(meKey(room.id), playerId);
@@ -470,6 +482,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       draft,
       meId,
       onlinePlayerIds,
+      onlineTemporaryCount,
       createRoom,
       joinRoom,
       leaveRoom,
@@ -495,6 +508,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       draft,
       meId,
       onlinePlayerIds,
+      onlineTemporaryCount,
       createRoom,
       joinRoom,
       leaveRoom,
