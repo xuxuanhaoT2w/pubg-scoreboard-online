@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Crosshair,
   Loader2,
@@ -20,12 +20,17 @@ import type { DraftPayload } from '../lib/supabase';
 import type { Game } from '../lib/types';
 
 export function RecordPage() {
-  const { players, games, draft, meId, updateDraft, commitGame, currentMatch } = useAppStore();
+  const { players, games, draft, meId, updateDraft, commitGame, currentMatch, setEditing } = useAppStore();
   const toast = useToast();
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
   const [giftFromId, setGiftFromId] = useState('');
   const [giftToId, setGiftToId] = useState('');
+
+  useEffect(() => {
+    setEditing(true);
+    return () => setEditing(false);
+  }, [setEditing]);
 
   // 草稿未加载完时显示骨架
   const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], giftRules: [] };

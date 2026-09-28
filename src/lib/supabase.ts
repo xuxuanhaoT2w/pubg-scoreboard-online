@@ -353,27 +353,39 @@ export function subscribeRoom(
 export function subscribeRoomPresence(
   roomId: string,
   playerId: string | null,
-  onChange: (playerIds: string[], temporaryCount: number) => void,
-): () => void {
+  onChange: (playerIds: string[], temporaryCount: number, editingPlayerIds: string[]) => void,
+): { setEditing: (editing: boolean) => void; unsubscribe: () => void } {
   const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
+  let editing = false;
   const publish = () => {
     const ids = new Set<string>();
+    const editingIds = new Set<string>();
     let temporaryCount = 0;
     Object.values(channel.presenceState()).flat().forEach((item) => {
-      const id = (item as { playerId?: unknown }).playerId;
-      if (typeof id === 'string') ids.add(id);
+      const member = item as { playerId?: unknown; editing?: unknown };
+      const id = member.playerId;
+      if (typeof id === 'string') {
+        ids.add(id);
+        if (member.editing === true) editingIds.add(id);
+      }
       else temporaryCount += 1;
     });
-    onChange([...ids], temporaryCount);
+    onChange([...ids], temporaryCount, [...editingIds]);
   };
   channel
     .on('presence', { event: 'sync' }, publish)
     .on('presence', { event: 'join' }, publish)
     .on('presence', { event: 'leave' }, publish)
     .subscribe((status) => {
-        if (status === 'SUBSCRIBED') void channel.track({ playerId }).then(publish);
+      if (status === 'SUBSCRIBED') void channel.track({ playerId, editing }).then(publish);
     });
-  return () => { void db().removeChannel(channel); };
+  return {
+    setEditing: (nextEditing) => {
+      editing = nextEditing;
+      void channel.track({ playerId, editing }).then(publish);
+    },
+    unsubscribe: () => { void db().removeChannel(channel); },
+  };
 }
 
 // ---------- 行映射 ----------

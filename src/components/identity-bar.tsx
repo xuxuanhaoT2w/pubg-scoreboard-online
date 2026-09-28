@@ -4,7 +4,7 @@ import { useAppStore } from '../store/app-store';
 
 /** 顶部「我是谁」选择条：每个人先选自己的名字，录入自己那行时高亮 */
 export function IdentityBar() {
-  const { players, meId, setMe, draft, updateDraft } = useAppStore();
+  const { players, meId, setMe, draft, updateDraft, onlinePlayerIds, editingPlayerIds } = useAppStore();
   const [open, setOpen] = useState(false);
   const me = players.find((p) => p.id === meId);
   const allSelected = players.length > 0 && players.every((p) => draft?.participantIds.includes(p.id));
@@ -72,6 +72,19 @@ export function IdentityBar() {
         <button type="button" className="tac-chip text-xs" onClick={() => selectParticipants(false)}>
           清空
         </button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 border-t border-line/60 pt-2 text-xs">
+        <span className="mr-1 text-ink-muted">成员</span>
+        {players.map((player) => {
+          const editing = editingPlayerIds.includes(player.id);
+          const online = onlinePlayerIds.includes(player.id);
+          return (
+            <span key={player.id} className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 ${editing ? 'border-primary/50 bg-primary/10 text-primary' : online ? 'border-gain/40 bg-gain/10 text-gain' : 'border-line bg-panel text-ink-muted'}`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${editing ? 'animate-pulse bg-primary' : online ? 'bg-gain' : 'bg-ink-muted/50'}`} />
+              {player.name}<span className="text-[10px] opacity-75">{editing ? '编辑中' : online ? '在线' : '离线'}</span>
+            </span>
+          );
+        })}
       </div>
     </div>
   );

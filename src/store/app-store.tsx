@@ -50,6 +50,7 @@ interface RoomStore {
   meId: string | null;
   onlinePlayerIds: string[];
   onlineTemporaryCount: number;
+  editingPlayerIds: string[];
   // 房间
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
@@ -58,6 +59,7 @@ interface RoomStore {
   endCurrentMatch: () => Promise<void>;
   // 身份
   setMe: (playerId: string | null) => void;
+  setEditing: (editing: boolean) => void;
   // 队员
   addPlayer: (name: string) => Promise<Player>;
   renamePlayer: (id: string, name: string) => Promise<void>;
@@ -131,6 +133,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [meId, setMeId] = useState<string | null>(null);
   const [onlinePlayerIds, setOnlinePlayerIds] = useState<string[]>([]);
   const [onlineTemporaryCount, setOnlineTemporaryCount] = useState(0);
+  const [editingPlayerIds, setEditingPlayerIds] = useState<string[]>([]);
+  const presenceRef = useRef<ReturnType<typeof subscribeRoomPresence> | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const roomIdRef = useRef<string | null>(null);
   const [supabaseOk, setSupabaseOk] = useState(false);
 
@@ -243,13 +248,21 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     if (status !== 'ready' || !room) {
       setOnlinePlayerIds([]);
       setOnlineTemporaryCount(0);
+      setEditingPlayerIds([]);
       return;
     }
-    return subscribeRoomPresence(room.id, meId, (ids, temporaryCount) => {
+    const presence = subscribeRoomPresence(room.id, meId, (ids, temporaryCount, editingIds) => {
       setOnlinePlayerIds(ids);
       setOnlineTemporaryCount(temporaryCount);
+      setEditingPlayerIds(editingIds);
     });
-  }, [status, room, meId]);
+    presenceRef.current = presence;
+    presence.setEditing(isEditing);
+    return () => {
+      if (presenceRef.current === presence) presenceRef.current = null;
+      presence.unsubscribe();
+    };
+  }, [status, room, meId, isEditing]);
 
   const createRoom = useCallback(
     async (name: string, seeds: string[]) => {
@@ -308,6 +321,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         setMeId(null);
         setOnlinePlayerIds([]);
         setOnlineTemporaryCount(0);
+        setEditingPlayerIds([]);
         setError(readableError(e, '无法加入该房间。请确认房间码或邀请链接完整有效。'));
         setStatus('no-room');
         throw e;
@@ -327,6 +341,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setMeId(null);
     setOnlinePlayerIds([]);
     setOnlineTemporaryCount(0);
+    setEditingPlayerIds([]);
     setStatus('no-room');
   }, []);
 
@@ -352,6 +367,11 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     },
     [room],
   );
+
+  const setEditing = useCallback((editing: boolean) => {
+    setIsEditing(editing);
+    presenceRef.current?.setEditing(editing);
+  }, []);
 
   const addPlayer = useCallback(
     async (name: string) => {
@@ -482,12 +502,14 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       meId,
       onlinePlayerIds,
       onlineTemporaryCount,
+      editingPlayerIds,
       createRoom,
       joinRoom,
       leaveRoom,
       deleteRoom,
       endCurrentMatch,
       setMe,
+      setEditing,
       addPlayer,
       renamePlayer,
       removePlayer,
@@ -508,11 +530,13 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       meId,
       onlinePlayerIds,
       onlineTemporaryCount,
+      editingPlayerIds,
       createRoom,
       joinRoom,
       leaveRoom,
       deleteRoom,
       setMe,
+      setEditing,
       addPlayer,
       renamePlayer,
       removePlayer,
