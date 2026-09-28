@@ -4,8 +4,6 @@ import {
   Loader2,
   Minus,
   Plus,
-  ShieldCheck,
-  Skull,
   Swords,
   Trophy,
   Users,
@@ -45,8 +43,6 @@ export function RecordPage() {
   const zeroKillsAsOneIds = d.zeroKillsAsOneIds ?? [];
   const giftRules = d.giftRules ?? [];
   const effectiveKills = useMemo(() => Object.fromEntries(participantIds.map((player) => [player.id, (kills[player.id] ?? 0) === 0 && zeroKillsAsOneIds.includes(player.id) ? 1 : (kills[player.id] ?? 0)])), [participantIds, kills, zeroKillsAsOneIds]);
-  const totalKills = participantIds.reduce((s, p) => s + (effectiveKills[p.id] ?? 0), 0);
-  const w = participantIds.filter((p) => winnerIds.includes(p.id)).length;
 
   const liveScores = useMemo(
     () => (n >= 2 ? scoreGame(d.participantIds, effectiveKills, winnerIds, giftRules) : {}),
@@ -199,10 +195,11 @@ export function RecordPage() {
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         {/* 左侧：录入表格 */}
         <section className="tac-card overflow-hidden">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+          <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
             <span>队员（{n} 人参战）</span>
             <span className="text-center">击杀数</span>
             <span className="text-center">吃鸡</span>
+            <span className="text-right">本局积分</span>
           </div>
 
           {players.length === 0 && (
@@ -218,10 +215,11 @@ export function RecordPage() {
               const k = kills[p.id] ?? 0;
               const isMe = p.id === meId;
               const zeroAsOne = zeroKillsAsOneIds.includes(p.id);
+              const delta = liveScores[p.id] ?? 0;
               return (
                 <div
                   key={p.id}
-                  className={`grid grid-cols-[minmax(0,1.4fr)_120px_96px] items-center gap-3 px-5 py-2.5 transition-colors ${
+                  className={`grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 px-5 py-2.5 transition-colors ${
                     isIn ? '' : 'opacity-45'
                   } ${isMe ? 'bg-primary/5' : ''}`}
                 >
@@ -317,99 +315,17 @@ export function RecordPage() {
                       {isWinner ? '吃鸡' : '—'}
                     </button>
                   </div>
+                  <span className={`num text-right text-lg font-bold tabular-nums ${delta > 0 ? 'text-gain' : delta < 0 ? 'text-loss' : 'text-ink-muted'}`}>
+                    {isIn && n >= 2 ? formatScore(delta) : '—'}
+                  </span>
                 </div>
               );
             })}
           </div>
         </section>
 
-        {/* 右侧：实时结算 */}
+        {/* 右侧：当前累计总分 */}
         <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <div className="tac-card clip-br p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <ShieldCheck size={16} className="text-primary" />
-              <h2 className="font-display text-sm font-bold tracking-wider">本局结算预览</h2>
-              <span className="ml-auto flex items-center gap-1 text-[11px] text-gain">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-gain" /> 实时
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg bg-panel-2 px-2 py-2">
-                <div className="num text-lg font-bold text-ink">{n}</div>
-                <div className="text-[10px] text-ink-muted">参战</div>
-              </div>
-              <div className="rounded-lg bg-panel-2 px-2 py-2">
-                <div className="num flex items-center justify-center gap-1 text-lg font-bold text-ink">
-                  {totalKills}
-                  <Skull size={12} className="text-ink-muted" />
-                </div>
-                <div className="text-[10px] text-ink-muted">总击杀</div>
-              </div>
-              <div className="rounded-lg bg-panel-2 px-2 py-2">
-                <div className="num flex items-center justify-center gap-1 text-lg font-bold text-ink">
-                  {w}
-                  <Trophy size={12} className="text-ink-muted" />
-                </div>
-                <div className="text-[10px] text-ink-muted">吃鸡</div>
-              </div>
-            </div>
-
-            <div className="mt-3 space-y-1.5">
-              {n < 2 ? (
-                <p className="rounded-lg bg-panel-2 px-3 py-3 text-center text-xs text-ink-muted">
-                  勾选至少 2 名参战队员后自动结算
-                </p>
-              ) : (
-                participantIds.map((p) => {
-                  const delta = liveScores[p.id] ?? 0;
-                  return (
-                    <div
-                      key={p.id}
-                      className="flex items-center justify-between rounded-lg bg-panel-2 px-3 py-2"
-                    >
-                      <span className="truncate text-sm font-semibold">{p.name}</span>
-                      <span
-                        className={`num text-lg font-bold tabular-nums ${
-                          delta > 0
-                            ? 'text-gain'
-                            : delta < 0
-                              ? 'text-loss'
-                              : 'text-ink-muted'
-                        }`}
-                      >
-                        {formatScore(delta)}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-gain/30 bg-gain/10 px-3 py-2 text-xs font-semibold text-gain">
-              <ShieldCheck size={14} /> 零和校验通过（合计 {formatScore(0)}）
-            </div>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!canSave || saving}
-              className="tac-btn tac-btn-primary mt-3 h-12 w-full text-base disabled:opacity-40"
-            >
-              {saving ? (
-                <Loader2 size={18} className="animate-spin" />
-              ) : (
-                <>
-                  <Swords size={18} /> 保存本局
-                </>
-              )}
-            </button>
-            <p className="mt-2 text-center text-[11px] text-ink-muted">
-              保存后表单自动清空（保留参战人员），可立即连录下一局
-            </p>
-          </div>
-
-          {/* 当前累计榜（连录时可见叠加效果） */}
           <div className="tac-card order-first border border-primary/50 bg-primary/[0.06] p-4">
             <div className="mb-3 flex items-center gap-2">
               <Users size={15} className="text-primary" />
@@ -446,6 +362,12 @@ export function RecordPage() {
             </div>
           </div>
         </aside>
+      </div>
+
+      <div className="mt-4 flex justify-end lg:pr-[340px]">
+        <button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 w-full max-w-md text-base disabled:opacity-40">
+          {saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局</>}
+        </button>
       </div>
 
       {/* 记录页快捷提示 */}
