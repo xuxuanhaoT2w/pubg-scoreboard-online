@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import type { Game, Match, Player } from '../lib/types';
+import { APP_RELEASE } from '../lib/release';
 import {
   addPlayer as apiAddPlayer,
   createRoom as apiCreateRoom,
@@ -370,6 +371,11 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setOnlineTemporaryCount(0);
     setEditingPlayerIds([]);
     setStatus('no-room');
+    // 通过新查询参数强制重新拉取 GitHub Pages 的入口和带哈希资源，避免仍运行旧脚本。
+    const refreshUrl = new URL(window.location.href);
+    refreshUrl.searchParams.set('v', APP_RELEASE);
+    refreshUrl.searchParams.set('refresh', String(Date.now()));
+    window.location.replace(refreshUrl.toString());
   }, []);
 
   const deleteRoom = useCallback(async () => {

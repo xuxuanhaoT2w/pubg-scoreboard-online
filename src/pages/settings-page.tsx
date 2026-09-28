@@ -244,7 +244,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
               <button
                 type="button"
                 onClick={async () => {
-                  const ok = await confirm({ title: '清理本机缓存？', message: '将清除本设备保存的房间、身份和旧网页缓存，并返回房间入口；云端房间、成员、场次和战绩不会删除。', confirmText: '清理并返回', cancelText: '取消', danger: true });
+                  const ok = await confirm({ title: '清理本机缓存？', message: '将清除本设备保存的房间、身份和旧网页缓存，然后自动重新加载最新版本；云端房间、成员、场次和战绩不会删除。', confirmText: '清理并升级', cancelText: '取消', danger: true });
                   if (ok) {
                     try {
                       await clearDeviceCache();
