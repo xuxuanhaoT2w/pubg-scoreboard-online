@@ -51,6 +51,7 @@ interface RoomStore {
   meId: string | null;
   onlinePlayerIds: string[];
   onlineTemporaryCount: number;
+  temporaryActivities: string[];
   editingPlayerIds: string[];
   editingActivities: Record<string, string>;
   // 房间
@@ -136,6 +137,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [meId, setMeId] = useState<string | null>(null);
   const [onlinePlayerIds, setOnlinePlayerIds] = useState<string[]>([]);
   const [onlineTemporaryCount, setOnlineTemporaryCount] = useState(0);
+  const [temporaryActivities, setTemporaryActivities] = useState<string[]>([]);
   const [editingPlayerIds, setEditingPlayerIds] = useState<string[]>([]);
   const [editingActivities, setEditingActivities] = useState<Record<string, string>>({});
   const presenceRef = useRef<ReturnType<typeof subscribeRoomPresence> | null>(null);
@@ -252,13 +254,15 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     if (status !== 'ready' || !room) {
       setOnlinePlayerIds([]);
       setOnlineTemporaryCount(0);
+      setTemporaryActivities([]);
       setEditingPlayerIds([]);
       setEditingActivities({});
       return;
     }
-    const presence = subscribeRoomPresence(room.id, meId, (ids, temporaryCount, editingIds, activities) => {
+    const presence = subscribeRoomPresence(room.id, meId, (ids, temporaryCount, editingIds, activities, tempActivities) => {
       setOnlinePlayerIds(ids);
       setOnlineTemporaryCount(temporaryCount);
+      setTemporaryActivities(tempActivities);
       setEditingPlayerIds(editingIds);
       setEditingActivities(activities);
     });
@@ -326,6 +330,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         setMeId(null);
         setOnlinePlayerIds([]);
         setOnlineTemporaryCount(0);
+        setTemporaryActivities([]);
         setEditingPlayerIds([]);
         setEditingActivities({});
         setError(readableError(e, '无法加入该房间。请确认房间码或邀请链接完整有效。'));
@@ -347,6 +352,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setMeId(null);
     setOnlinePlayerIds([]);
     setOnlineTemporaryCount(0);
+    setTemporaryActivities([]);
     setEditingPlayerIds([]);
     setEditingActivities({});
     setStatus('no-room');
@@ -375,6 +381,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setMeId(null);
     setOnlinePlayerIds([]);
     setOnlineTemporaryCount(0);
+    setTemporaryActivities([]);
     setEditingPlayerIds([]);
     setEditingActivities({});
     setStatus('no-room');
@@ -542,6 +549,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       meId,
       onlinePlayerIds,
       onlineTemporaryCount,
+      temporaryActivities,
       editingPlayerIds,
       editingActivities,
       createRoom,
@@ -572,6 +580,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       meId,
       onlinePlayerIds,
       onlineTemporaryCount,
+      temporaryActivities,
       editingPlayerIds,
       editingActivities,
       createRoom,

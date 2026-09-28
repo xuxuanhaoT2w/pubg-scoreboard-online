@@ -390,7 +390,7 @@ export function subscribeRoom(
 export function subscribeRoomPresence(
   roomId: string,
   playerId: string | null,
-  onChange: (playerIds: string[], temporaryCount: number, editingPlayerIds: string[], activities: Record<string, string>) => void,
+  onChange: (playerIds: string[], temporaryCount: number, editingPlayerIds: string[], activities: Record<string, string>, temporaryActivities: string[]) => void,
 ): { setActivity: (activity: string | null) => void; unsubscribe: () => void } {
   const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
   let activity: string | null = null;
@@ -398,6 +398,7 @@ export function subscribeRoomPresence(
     const ids = new Set<string>();
     const editingIds = new Set<string>();
     const activities: Record<string, string> = {};
+    const temporaryActivities: string[] = [];
     let temporaryCount = 0;
     Object.values(channel.presenceState()).flat().forEach((item) => {
       const member = item as { playerId?: unknown; activity?: unknown };
@@ -409,9 +410,12 @@ export function subscribeRoomPresence(
           activities[id] = member.activity;
         }
       }
-      else temporaryCount += 1;
+      else {
+        temporaryCount += 1;
+        if (typeof member.activity === 'string' && member.activity) temporaryActivities.push(member.activity);
+      }
     });
-    onChange([...ids], temporaryCount, [...editingIds], activities);
+    onChange([...ids], temporaryCount, [...editingIds], activities, temporaryActivities);
   };
   channel
     .on('presence', { event: 'sync' }, publish)

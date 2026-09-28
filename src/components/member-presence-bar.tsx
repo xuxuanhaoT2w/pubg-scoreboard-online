@@ -3,7 +3,7 @@ import { useAppStore } from '../store/app-store';
 
 /** 全局显示房间成员的实时在线和录入状态。 */
 export function MemberPresenceBar() {
-  const { players, onlinePlayerIds, editingPlayerIds, editingActivities, onlineTemporaryCount } = useAppStore();
+  const { players, onlinePlayerIds, editingPlayerIds, editingActivities, onlineTemporaryCount, temporaryActivities } = useAppStore();
 
   return (
     <div className="border-b border-line bg-panel/50">
@@ -19,7 +19,12 @@ export function MemberPresenceBar() {
             </span>
           );
         })}
-        {onlineTemporaryCount > 0 && <span className="inline-flex items-center gap-1 rounded-full border border-line bg-panel-2 px-2 py-1 text-ink-muted"><span className="h-1.5 w-1.5 rounded-full bg-ink-muted/50" /> 临时用户 ×{onlineTemporaryCount}</span>}
+        {Array.from({ length: onlineTemporaryCount }, (_, index) => (
+          <span key={`temporary-${index}`} className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 ${temporaryActivities[index] ? 'border-primary/50 bg-primary/10 text-primary' : 'border-line bg-panel-2 text-ink-muted'}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${temporaryActivities[index] ? 'animate-pulse bg-primary' : 'bg-ink-muted/50'}`} />
+            临时用户 {index + 1}<span className="text-[10px] opacity-75">{temporaryActivities[index] ?? '在线'}</span>
+          </span>
+        ))}
       </div>
     </div>
   );
