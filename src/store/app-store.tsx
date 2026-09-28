@@ -52,6 +52,7 @@ interface RoomStore {
   onlinePlayerIds: string[];
   onlineTemporaryCount: number;
   editingPlayerIds: string[];
+  editingActivities: Record<string, string>;
   // 房间
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
@@ -61,7 +62,7 @@ interface RoomStore {
   endCurrentMatch: () => Promise<void>;
   // 身份
   setMe: (playerId: string | null) => void;
-  setEditing: (editing: boolean) => void;
+  setEditingActivity: (activity: string | null) => void;
   // 队员
   addPlayer: (name: string) => Promise<Player>;
   renamePlayer: (id: string, name: string) => Promise<void>;
@@ -136,8 +137,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [onlinePlayerIds, setOnlinePlayerIds] = useState<string[]>([]);
   const [onlineTemporaryCount, setOnlineTemporaryCount] = useState(0);
   const [editingPlayerIds, setEditingPlayerIds] = useState<string[]>([]);
+  const [editingActivities, setEditingActivities] = useState<Record<string, string>>({});
   const presenceRef = useRef<ReturnType<typeof subscribeRoomPresence> | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editingActivity, setEditingActivityState] = useState<string | null>(null);
   const roomIdRef = useRef<string | null>(null);
   const [supabaseOk, setSupabaseOk] = useState(false);
 
@@ -251,20 +253,22 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       setOnlinePlayerIds([]);
       setOnlineTemporaryCount(0);
       setEditingPlayerIds([]);
+      setEditingActivities({});
       return;
     }
-    const presence = subscribeRoomPresence(room.id, meId, (ids, temporaryCount, editingIds) => {
+    const presence = subscribeRoomPresence(room.id, meId, (ids, temporaryCount, editingIds, activities) => {
       setOnlinePlayerIds(ids);
       setOnlineTemporaryCount(temporaryCount);
       setEditingPlayerIds(editingIds);
+      setEditingActivities(activities);
     });
     presenceRef.current = presence;
-    presence.setEditing(isEditing);
+    presence.setActivity(editingActivity);
     return () => {
       if (presenceRef.current === presence) presenceRef.current = null;
       presence.unsubscribe();
     };
-  }, [status, room, meId, isEditing]);
+  }, [status, room, meId, editingActivity]);
 
   const createRoom = useCallback(
     async (name: string, seeds: string[]) => {
@@ -323,6 +327,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         setOnlinePlayerIds([]);
         setOnlineTemporaryCount(0);
         setEditingPlayerIds([]);
+        setEditingActivities({});
         setError(readableError(e, '无法加入该房间。请确认房间码或邀请链接完整有效。'));
         setStatus('no-room');
         throw e;
@@ -343,6 +348,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setOnlinePlayerIds([]);
     setOnlineTemporaryCount(0);
     setEditingPlayerIds([]);
+    setEditingActivities({});
     setStatus('no-room');
   }, []);
 
@@ -370,6 +376,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setOnlinePlayerIds([]);
     setOnlineTemporaryCount(0);
     setEditingPlayerIds([]);
+    setEditingActivities({});
     setStatus('no-room');
     // 通过新查询参数强制重新拉取 GitHub Pages 的入口和带哈希资源，避免仍运行旧脚本。
     const refreshUrl = new URL(window.location.href);
@@ -401,9 +408,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     [room],
   );
 
-  const setEditing = useCallback((editing: boolean) => {
-    setIsEditing(editing);
-    presenceRef.current?.setEditing(editing);
+  const setEditingActivity = useCallback((activity: string | null) => {
+    setEditingActivityState(activity);
+    presenceRef.current?.setActivity(activity);
   }, []);
 
   const addPlayer = useCallback(
@@ -536,6 +543,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       onlinePlayerIds,
       onlineTemporaryCount,
       editingPlayerIds,
+      editingActivities,
       createRoom,
       joinRoom,
       leaveRoom,
@@ -543,7 +551,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       deleteRoom,
       endCurrentMatch,
       setMe,
-      setEditing,
+      setEditingActivity,
       addPlayer,
       renamePlayer,
       removePlayer,
@@ -565,13 +573,14 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       onlinePlayerIds,
       onlineTemporaryCount,
       editingPlayerIds,
+      editingActivities,
       createRoom,
       joinRoom,
       leaveRoom,
       clearDeviceCache,
       deleteRoom,
       setMe,
-      setEditing,
+      setEditingActivity,
       addPlayer,
       renamePlayer,
       removePlayer,

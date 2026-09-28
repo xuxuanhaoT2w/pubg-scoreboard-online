@@ -20,7 +20,7 @@ import type { DraftPayload } from '../lib/supabase';
 import type { Game } from '../lib/types';
 
 export function RecordPage() {
-  const { players, games, draft, meId, updateDraft, commitGame, currentMatch, setEditing } = useAppStore();
+  const { players, games, draft, meId, updateDraft, commitGame, currentMatch, setEditingActivity } = useAppStore();
   const toast = useToast();
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
@@ -28,9 +28,9 @@ export function RecordPage() {
   const [giftToId, setGiftToId] = useState('');
 
   useEffect(() => {
-    setEditing(true);
-    return () => setEditing(false);
-  }, [setEditing]);
+    setEditingActivity('正在录入本局');
+    return () => setEditingActivity(null);
+  }, [setEditingActivity]);
 
   // 草稿未加载完时显示骨架
   const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], giftRules: [] };
@@ -283,6 +283,8 @@ export function RecordPage() {
                         disabled={!isIn}
                         className="kill-num"
                         value={isIn ? k : 0}
+                        onFocus={() => setEditingActivity(`正在编辑 ${p.name} 的击杀`)}
+                        onBlur={() => setEditingActivity('正在录入本局')}
                         onChange={(e) => {
                           if (isIn) setKills(p.id, Number(e.target.value) || 0);
                         }}
@@ -304,7 +306,7 @@ export function RecordPage() {
                     <button
                       type="button"
                       disabled={!isIn}
-                      onClick={() => toggleWinner(p.id)}
+                      onClick={() => { setEditingActivity(`正在编辑 ${p.name} 的吃鸡状态`); toggleWinner(p.id); }}
                       className={`flex h-10 w-14 items-center justify-center gap-1 rounded-lg border text-xs font-semibold transition-all ${
                         isWinner
                           ? 'border-primary bg-primary/15 text-gain'

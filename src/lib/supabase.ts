@@ -390,36 +390,40 @@ export function subscribeRoom(
 export function subscribeRoomPresence(
   roomId: string,
   playerId: string | null,
-  onChange: (playerIds: string[], temporaryCount: number, editingPlayerIds: string[]) => void,
-): { setEditing: (editing: boolean) => void; unsubscribe: () => void } {
+  onChange: (playerIds: string[], temporaryCount: number, editingPlayerIds: string[], activities: Record<string, string>) => void,
+): { setActivity: (activity: string | null) => void; unsubscribe: () => void } {
   const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
-  let editing = false;
+  let activity: string | null = null;
   const publish = () => {
     const ids = new Set<string>();
     const editingIds = new Set<string>();
+    const activities: Record<string, string> = {};
     let temporaryCount = 0;
     Object.values(channel.presenceState()).flat().forEach((item) => {
-      const member = item as { playerId?: unknown; editing?: unknown };
+      const member = item as { playerId?: unknown; activity?: unknown };
       const id = member.playerId;
       if (typeof id === 'string') {
         ids.add(id);
-        if (member.editing === true) editingIds.add(id);
+        if (typeof member.activity === 'string' && member.activity) {
+          editingIds.add(id);
+          activities[id] = member.activity;
+        }
       }
       else temporaryCount += 1;
     });
-    onChange([...ids], temporaryCount, [...editingIds]);
+    onChange([...ids], temporaryCount, [...editingIds], activities);
   };
   channel
     .on('presence', { event: 'sync' }, publish)
     .on('presence', { event: 'join' }, publish)
     .on('presence', { event: 'leave' }, publish)
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') void channel.track({ playerId, editing }).then(publish);
+      if (status === 'SUBSCRIBED') void channel.track({ playerId, activity }).then(publish);
     });
   return {
-    setEditing: (nextEditing) => {
-      editing = nextEditing;
-      void channel.track({ playerId, editing }).then(publish);
+    setActivity: (nextActivity) => {
+      activity = nextActivity;
+      void channel.track({ playerId, activity }).then(publish);
     },
     unsubscribe: () => { void db().removeChannel(channel); },
   };
