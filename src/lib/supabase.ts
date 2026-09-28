@@ -350,6 +350,30 @@ export function subscribeRoom(
   };
 }
 
+export function subscribeRoomPresence(
+  roomId: string,
+  playerId: string | null,
+  onChange: (playerIds: string[]) => void,
+): () => void {
+  const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
+  const publish = () => {
+    const ids = new Set<string>();
+    Object.values(channel.presenceState()).flat().forEach((item) => {
+      const id = (item as { playerId?: unknown }).playerId;
+      if (typeof id === 'string') ids.add(id);
+    });
+    onChange([...ids]);
+  };
+  channel
+    .on('presence', { event: 'sync' }, publish)
+    .on('presence', { event: 'join' }, publish)
+    .on('presence', { event: 'leave' }, publish)
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') void channel.track({ playerId });
+    });
+  return () => { void db().removeChannel(channel); };
+}
+
 // ---------- 行映射 ----------
 function rowToPlayer(r: PlayerRow): Player {
   return { id: r.id, name: r.name };

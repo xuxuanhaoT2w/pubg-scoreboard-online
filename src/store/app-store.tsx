@@ -29,6 +29,7 @@ import {
   renamePlayer as apiRenamePlayer,
   saveDraft as apiSaveDraft,
   subscribeRoom,
+  subscribeRoomPresence,
   type DraftPayload,
   type RoomRow,
 } from '../lib/supabase';
@@ -47,6 +48,7 @@ interface RoomStore {
   currentMatch: Match | null;
   draft: DraftPayload | null;
   meId: string | null;
+  onlinePlayerIds: string[];
   // 房间
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
@@ -126,6 +128,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [draft, setDraftState] = useState<DraftPayload | null>(null);
   const draftRef = useRef<DraftPayload | null>(null);
   const [meId, setMeId] = useState<string | null>(null);
+  const [onlinePlayerIds, setOnlinePlayerIds] = useState<string[]>([]);
   const roomIdRef = useRef<string | null>(null);
   const [supabaseOk, setSupabaseOk] = useState(false);
 
@@ -234,6 +237,11 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     return unsubscribe;
   }, [status, room, matches]);
 
+  useEffect(() => {
+    if (status !== 'ready' || !room) { setOnlinePlayerIds([]); return; }
+    return subscribeRoomPresence(room.id, meId, setOnlinePlayerIds);
+  }, [status, room, meId]);
+
   const createRoom = useCallback(
     async (name: string, seeds: string[]) => {
       setError(null);
@@ -306,6 +314,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setMatches([]);
     setDraft(null);
     setMeId(null);
+    setOnlinePlayerIds([]);
     setStatus('no-room');
   }, []);
 
@@ -457,6 +466,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       currentMatch: matches.find((match) => match.status === 'active') ?? null,
       draft,
       meId,
+      onlinePlayerIds,
       createRoom,
       joinRoom,
       leaveRoom,
@@ -481,6 +491,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       matches,
       draft,
       meId,
+      onlinePlayerIds,
       createRoom,
       joinRoom,
       leaveRoom,
