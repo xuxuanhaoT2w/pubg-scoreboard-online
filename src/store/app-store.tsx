@@ -239,7 +239,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (status !== 'ready' || !room) { setOnlinePlayerIds([]); return; }
-    return subscribeRoomPresence(room.id, meId, setOnlinePlayerIds);
+    return subscribeRoomPresence(room.id, meId, (ids) => {
+      setOnlinePlayerIds([...new Set(meId ? [...ids, meId] : ids)]);
+    });
   }, [status, room, meId]);
 
   const createRoom = useCallback(
@@ -327,6 +329,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const setMe = useCallback(
     (playerId: string | null) => {
       setMeId(playerId);
+      setOnlinePlayerIds(playerId ? [playerId] : []);
       if (room) {
         try {
           if (playerId) localStorage.setItem(meKey(room.id), playerId);
