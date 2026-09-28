@@ -336,7 +336,7 @@ export function RecordPage() {
               <span className="ml-auto text-[10px] font-semibold text-ink-muted">本场排行</span>
             </div>
             <div className="space-y-1.5">
-              {participantIds
+              {players
                 .slice()
                 .sort((a, b) => {
                   const sa = statsMap.get(a.id)?.totalScore ?? 0;
@@ -350,7 +350,7 @@ export function RecordPage() {
                     <div key={p.id} className="flex items-center justify-between rounded-lg bg-panel/80 px-2.5 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
                         <span className="num w-4 text-center text-xs text-ink-muted">{i + 1}</span>
-                        <span className="min-w-0"><span className="block truncate">{p.name}</span><span className="mt-0.5 block text-[10px] text-ink-muted">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 吃鸡</span></span>
+                        <span className="min-w-0"><span className="block truncate">{p.name}</span><span className="mt-0.5 block text-[10px] text-ink-muted">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 吃鸡 · {stat?.games ?? 0} 局</span></span>
                       </span>
                       <span
                         className={`num text-base font-bold tabular-nums ${
@@ -362,7 +362,7 @@ export function RecordPage() {
                     </div>
                   );
                 })}
-              {n === 0 && <p className="py-2 text-center text-xs text-ink-muted">暂无参战队员</p>}
+              {players.length === 0 && <p className="py-2 text-center text-xs text-ink-muted">暂无队员</p>}
             </div>
           </div>
         </aside>

@@ -4,7 +4,6 @@ import { Crosshair, Loader2 } from 'lucide-react';
 import './index.css';
 import { RoomStoreProvider, useAppStore } from './store/app-store';
 import { NavBar, type TabKey } from './components/nav-bar';
-import { LeaderboardPage } from './pages/leaderboard-page';
 import { RecordPage } from './pages/record-page';
 import { HistoryPage } from './pages/history-page';
 import { MatchesPage } from './pages/matches-page';
@@ -66,7 +65,6 @@ function App() {
       <MemberPresenceBar />
       {tab === 'record' && <IdentityBar />}
       <main className="mx-auto w-full max-w-6xl">
-        {tab === 'leaderboard' && <LeaderboardPage onNavigate={setTab} />}
         {tab === 'record' && <RecordPage />}
         {tab === 'history' && <HistoryPage onNavigate={setTab} />}
         {tab === 'matches' && <MatchesPage />}

@@ -1,10 +1,9 @@
 import type { LucideIcon } from 'lucide-react';
-import { Crosshair, History, Settings, Trophy } from 'lucide-react';
+import { Crosshair, History, Settings } from 'lucide-react';
 
-export type TabKey = 'leaderboard' | 'record' | 'history' | 'matches' | 'settings' | 'room-manager';
+export type TabKey = 'record' | 'history' | 'matches' | 'settings' | 'room-manager';
 
 const NAV_ITEMS: { key: TabKey; label: string; icon: LucideIcon }[] = [
-  { key: 'leaderboard', label: '排行榜', icon: Trophy },
   { key: 'history', label: '历史', icon: History },
   { key: 'settings', label: '房间', icon: Settings },
 ];
@@ -20,7 +19,7 @@ export function NavBar({ active, onChange }: NavBarProps) {
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
         <button
           type="button"
-          onClick={() => onChange('leaderboard')}
+          onClick={() => onChange('record')}
           className="flex items-center gap-2.5"
         >
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-black">
