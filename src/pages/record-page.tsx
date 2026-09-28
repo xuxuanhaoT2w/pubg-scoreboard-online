@@ -186,6 +186,9 @@ export function RecordPage() {
         >
           一键清理
         </button>
+        <button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-10 px-5 text-sm disabled:opacity-40">
+          {saving ? <Loader2 size={17} className="animate-spin" /> : <><Swords size={17} /> 保存本局</>}
+        </button>
       </header>
 
       <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3">
@@ -363,12 +366,6 @@ export function RecordPage() {
             </div>
           </div>
         </aside>
-      </div>
-
-      <div className="mt-4 flex justify-end lg:pr-[340px]">
-        <button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 w-full max-w-md text-base disabled:opacity-40">
-          {saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局</>}
-        </button>
       </div>
 
       {/* 记录页快捷提示 */}
