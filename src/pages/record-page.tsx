@@ -341,12 +341,13 @@ export function RecordPage() {
                   return sb - sa;
                 })
                 .map((p, i) => {
-                  const total = statsMap.get(p.id)?.totalScore ?? 0;
+                  const stat = statsMap.get(p.id);
+                  const total = stat?.totalScore ?? 0;
                   return (
-                    <div key={p.id} className="flex items-center justify-between rounded-lg bg-panel/80 px-2.5 py-1.5 text-sm">
+                    <div key={p.id} className="flex items-center justify-between rounded-lg bg-panel/80 px-2.5 py-2 text-sm">
                       <span className="flex min-w-0 items-center gap-2">
                         <span className="num w-4 text-center text-xs text-ink-muted">{i + 1}</span>
-                        <span className="truncate">{p.name}</span>
+                        <span className="min-w-0"><span className="block truncate">{p.name}</span><span className="mt-0.5 block text-[10px] text-ink-muted">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 吃鸡</span></span>
                       </span>
                       <span
                         className={`num text-base font-bold tabular-nums ${
