@@ -259,9 +259,12 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       setEditingActivities({});
       return;
     }
+    // Presence 刚建立时先计入本机，避免已选身份却短暂显示在线 0。
+    setOnlinePlayerIds(meId ? [meId] : []);
+    setOnlineTemporaryCount(meId ? 0 : 1);
     const presence = subscribeRoomPresence(room.id, meId, editingActivity, (ids, temporaryCount, editingIds, activities, tempActivities) => {
-      setOnlinePlayerIds(ids);
-      setOnlineTemporaryCount(temporaryCount);
+      setOnlinePlayerIds([...new Set(meId ? [...ids, meId] : ids)]);
+      setOnlineTemporaryCount(meId ? temporaryCount : Math.max(temporaryCount, 1));
       setTemporaryActivities(tempActivities);
       setEditingPlayerIds(editingIds);
       setEditingActivities(activities);
@@ -400,8 +403,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const setMe = useCallback(
     (playerId: string | null) => {
       setMeId(playerId);
-      setOnlinePlayerIds([]);
-      setOnlineTemporaryCount(0);
+      setOnlinePlayerIds(playerId ? [playerId] : []);
+      setOnlineTemporaryCount(playerId ? 0 : 1);
       if (room) {
         try {
           if (playerId) localStorage.setItem(meKey(room.id), playerId);

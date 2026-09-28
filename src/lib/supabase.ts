@@ -395,6 +395,11 @@ export function subscribeRoomPresence(
 ): { setActivity: (activity: string | null) => void; unsubscribe: () => void } {
   const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
   let activity = initialActivity;
+  let subscribed = false;
+  const track = () => {
+    if (!subscribed) return;
+    void channel.track({ playerId, activity }).then(publish);
+  };
   const publish = () => {
     const ids = new Set<string>();
     const editingIds = new Set<string>();
@@ -423,14 +428,22 @@ export function subscribeRoomPresence(
     .on('presence', { event: 'join' }, publish)
     .on('presence', { event: 'leave' }, publish)
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') void channel.track({ playerId, activity }).then(publish);
+      if (status === 'SUBSCRIBED') {
+        subscribed = true;
+        track();
+      }
     });
+  const heartbeat = window.setInterval(track, 15_000);
   return {
     setActivity: (nextActivity) => {
       activity = nextActivity;
-      void channel.track({ playerId, activity }).then(publish);
+      track();
     },
-    unsubscribe: () => { void db().removeChannel(channel); },
+    unsubscribe: () => {
+      subscribed = false;
+      window.clearInterval(heartbeat);
+      void db().removeChannel(channel);
+    },
   };
 }
 
