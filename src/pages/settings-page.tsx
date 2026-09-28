@@ -29,6 +29,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
     renamePlayer,
     removePlayer,
     leaveRoom,
+    clearDeviceCache,
     deleteRoom,
     endCurrentMatch,
   } = useAppStore();
@@ -239,6 +240,23 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
                 className="tac-btn mt-2 h-10 w-full"
               >
                 <LogOut size={16} /> 退出本设备
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const ok = await confirm({ title: '清理本机缓存？', message: '将清除本设备保存的房间、身份和旧网页缓存，并返回房间入口；云端房间、成员、场次和战绩不会删除。', confirmText: '清理并返回', cancelText: '取消', danger: true });
+                  if (ok) {
+                    try {
+                      await clearDeviceCache();
+                      toast.success('本机缓存已清理，请重新选择或输入房间码');
+                    } catch (e) {
+                      toast.error(e instanceof Error ? e.message : '缓存清理失败');
+                    }
+                  }
+                }}
+                className="tac-btn mt-2 h-10 w-full text-loss"
+              >
+                <RefreshCw size={16} /> 清理本机缓存
               </button>
               <button
                 type="button"

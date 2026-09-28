@@ -55,6 +55,7 @@ interface RoomStore {
   createRoom: (name: string, seeds: string[]) => Promise<void>;
   joinRoom: (code: string) => Promise<void>;
   leaveRoom: () => Promise<void>;
+  clearDeviceCache: () => Promise<void>;
   deleteRoom: () => Promise<void>;
   endCurrentMatch: () => Promise<void>;
   // 身份
@@ -344,6 +345,33 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setStatus('no-room');
   }, []);
 
+  const clearDeviceCache = useCallback(async () => {
+    clearLocalRoomCache();
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.filter((key) => key.startsWith('pubg-scoreboard')).map((key) => caches.delete(key)));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+    } catch {
+      // 浏览器禁止 Cache API 时，本地房间和身份记录仍已清除。
+    }
+    roomIdRef.current = null;
+    setRoom(null);
+    setPlayers([]);
+    setGames([]);
+    setMatches([]);
+    setDraft(null);
+    setMeId(null);
+    setOnlinePlayerIds([]);
+    setOnlineTemporaryCount(0);
+    setEditingPlayerIds([]);
+    setStatus('no-room');
+  }, []);
+
   const deleteRoom = useCallback(async () => {
     if (!room) throw new Error('尚未进入房间');
     await apiDeleteRoom(room.id);
@@ -505,6 +533,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       createRoom,
       joinRoom,
       leaveRoom,
+      clearDeviceCache,
       deleteRoom,
       endCurrentMatch,
       setMe,
@@ -533,6 +562,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       createRoom,
       joinRoom,
       leaveRoom,
+      clearDeviceCache,
       deleteRoom,
       setMe,
       setEditing,
