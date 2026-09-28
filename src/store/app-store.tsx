@@ -304,9 +304,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       setError(null);
       try {
         clearInviteClientCache();
-        const normalizedCode = code.trim().toUpperCase();
-        if (!normalizedCode) throw new Error('请提供有效的房间码或邀请链接');
-        const r = await getRoomByCode(normalizedCode);
+        if (!code.trim()) throw new Error('请提供有效的房间码或邀请链接');
+        const r = await getRoomByCode(code);
         await loadRoom(r.id);
         setRoom(r);
         setStatus('ready');

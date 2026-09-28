@@ -121,14 +121,31 @@ export async function createRoom(
 
 export async function getRoomByCode(code: string): Promise<RoomRow> {
   const supabase = db();
+  const normalizedCode = extractJoinCode(code);
+  if (!normalizedCode) throw new Error('请提供有效的 6 位房间码或完整邀请链接');
   const { data, error } = await supabase
     .from('rooms')
     .select('*')
-    .ilike('join_code', code.trim())
+    .eq('join_code', normalizedCode)
     .maybeSingle();
   if (error) throw error;
   if (!data) throw new Error('房间码不存在，请检查后重试');
   return data as RoomRow;
+}
+
+/** 支持 6 位房间码、完整邀请链接及带版本参数的历史分享链接。 */
+export function extractJoinCode(value: string): string | null {
+  const raw = value.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const code = url.searchParams.get('join') ?? url.searchParams.get('c');
+    if (code) return extractJoinCode(code);
+  } catch {
+    // 不是 URL 时按普通房间码处理
+  }
+  const match = raw.match(/[A-HJ-NP-Z2-9]{6}/i);
+  return match ? match[0].toUpperCase() : null;
 }
 
 export async function getRoomById(id: string): Promise<RoomRow | null> {
@@ -143,9 +160,14 @@ export async function getRoomById(id: string): Promise<RoomRow | null> {
 }
 
 export async function listRooms(): Promise<RoomRow[]> {
-  const { data, error } = await db().from('rooms').select('*').order('created_at', { ascending: false });
-  if (error) throw error;
-  return data as RoomRow[];
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const { data, error } = await db().from('rooms').select('*').order('created_at', { ascending: false });
+    if (!error) return data as RoomRow[];
+    lastError = error;
+    await new Promise((resolve) => window.setTimeout(resolve, 300 * (attempt + 1)));
+  }
+  throw lastError;
 }
 
 export async function deleteRoom(roomId: string): Promise<void> {
