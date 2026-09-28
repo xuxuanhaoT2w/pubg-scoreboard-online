@@ -245,9 +245,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       setOnlineTemporaryCount(0);
       return;
     }
-    setOnlineTemporaryCount(meId ? 0 : 1);
     return subscribeRoomPresence(room.id, meId, (ids, temporaryCount) => {
-      setOnlinePlayerIds([...new Set(meId ? [...ids, meId] : ids)]);
+      setOnlinePlayerIds(ids);
       setOnlineTemporaryCount(temporaryCount);
     });
   }, [status, room, meId]);
@@ -340,8 +339,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const setMe = useCallback(
     (playerId: string | null) => {
       setMeId(playerId);
-      setOnlinePlayerIds(playerId ? [playerId] : []);
-      setOnlineTemporaryCount(playerId ? 0 : 1);
+      setOnlinePlayerIds([]);
+      setOnlineTemporaryCount(0);
       if (room) {
         try {
           if (playerId) localStorage.setItem(meKey(room.id), playerId);

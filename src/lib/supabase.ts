@@ -371,7 +371,7 @@ export function subscribeRoomPresence(
     .on('presence', { event: 'join' }, publish)
     .on('presence', { event: 'leave' }, publish)
     .subscribe((status) => {
-      if (status === 'SUBSCRIBED') void channel.track({ playerId });
+        if (status === 'SUBSCRIBED') void channel.track({ playerId }).then(publish);
     });
   return () => { void db().removeChannel(channel); };
 }
