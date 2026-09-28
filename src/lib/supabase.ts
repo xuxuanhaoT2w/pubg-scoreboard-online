@@ -390,10 +390,11 @@ export function subscribeRoom(
 export function subscribeRoomPresence(
   roomId: string,
   playerId: string | null,
+  initialActivity: string | null,
   onChange: (playerIds: string[], temporaryCount: number, editingPlayerIds: string[], activities: Record<string, string>, temporaryActivities: string[]) => void,
 ): { setActivity: (activity: string | null) => void; unsubscribe: () => void } {
   const channel = db().channel(`presence:${roomId}`, { config: { presence: { key: crypto.randomUUID() } } });
-  let activity: string | null = null;
+  let activity = initialActivity;
   const publish = () => {
     const ids = new Set<string>();
     const editingIds = new Set<string>();

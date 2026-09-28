@@ -259,7 +259,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       setEditingActivities({});
       return;
     }
-    const presence = subscribeRoomPresence(room.id, meId, (ids, temporaryCount, editingIds, activities, tempActivities) => {
+    const presence = subscribeRoomPresence(room.id, meId, editingActivity, (ids, temporaryCount, editingIds, activities, tempActivities) => {
       setOnlinePlayerIds(ids);
       setOnlineTemporaryCount(temporaryCount);
       setTemporaryActivities(tempActivities);
@@ -267,7 +267,6 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       setEditingActivities(activities);
     });
     presenceRef.current = presence;
-    presence.setActivity(editingActivity);
     return () => {
       if (presenceRef.current === presence) presenceRef.current = null;
       presence.unsubscribe();
