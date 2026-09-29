@@ -329,9 +329,11 @@ export function RecordPage() {
             <div className="mb-3 flex items-center gap-2">
               <Users size={15} className="text-primary" />
               <h2 className="font-display text-base font-bold tracking-wider text-primary">当场排行榜</h2>
-              <span className="ml-auto text-[10px] font-semibold text-ink-muted">
-                {games.length} 局 · {totalKills} 杀 · 总吃鸡局数 {totalWinningGames}
-              </span>
+            </div>
+            <div className="mb-3 grid grid-cols-3 divide-x divide-line rounded-lg border border-line bg-panel/70 py-2">
+              <div className="text-center"><div className="text-[10px] text-ink-muted">已录入</div><div className="num mt-0.5 text-base font-bold text-ink">{games.length}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
+              <div className="text-center"><div className="text-[10px] text-ink-muted">总击杀</div><div className="num mt-0.5 text-base font-bold text-primary">{totalKills}<span className="ml-0.5 text-[10px] font-normal">杀</span></div></div>
+              <div className="text-center"><div className="text-[10px] text-ink-muted">吃鸡局数</div><div className="num mt-0.5 text-base font-bold text-gain">{totalWinningGames}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
             </div>
             <div className="space-y-1.5">
               {rankedPlayers
@@ -345,18 +347,18 @@ export function RecordPage() {
                   const stat = statsMap.get(p.id);
                   const total = stat?.totalScore ?? 0;
                   return (
-                    <div key={p.id} className="flex items-center justify-between rounded-lg bg-panel/80 px-2.5 py-2 text-sm">
-                      <span className="flex min-w-0 items-center gap-2">
-                        <span className="num w-4 text-center text-xs text-ink-muted">{i + 1}</span>
-                        <span className="min-w-0"><span className="block truncate">{p.name}</span><span className="mt-0.5 block text-[10px] text-ink-muted">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 吃鸡 · {stat?.games ?? 0} 局</span></span>
-                      </span>
-                      <span
+                    <div key={p.id} className="rounded-lg border border-line/70 bg-panel/80 px-3 py-2.5 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="truncate font-semibold">{p.name}</span></span>
+                        <span className="text-right"><span className="block text-[10px] text-ink-muted">总积分</span><span
                         className={`num text-base font-bold tabular-nums ${
                           total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
                         }`}
                       >
                         {formatScore(total)}
-                      </span>
+                        </span></span>
+                      </div>
+                      <div className="mt-2 grid grid-cols-3 divide-x divide-line/80 rounded bg-panel-2/80 py-1.5 text-center"><div><span className="block text-[9px] text-ink-muted">参战局数</span><b className="num text-sm text-ink">{stat?.games ?? 0}</b></div><div><span className="block text-[9px] text-ink-muted">总击杀</span><b className="num text-sm text-primary">{stat?.totalKills ?? 0}</b></div><div><span className="block text-[9px] text-ink-muted">吃鸡数</span><b className="num text-sm text-gain">{stat?.wins ?? 0}</b></div></div>
                     </div>
                   );
                 })}
