@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Crosshair,
+  ChevronDown,
+  Gift,
   Loader2,
   Minus,
   Plus,
@@ -22,6 +24,7 @@ export function RecordPage() {
   const toast = useToast();
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
+  const [showGiftRules, setShowGiftRules] = useState(false);
   const [giftFromId, setGiftFromId] = useState('');
   const [giftToId, setGiftToId] = useState('');
 
@@ -58,6 +61,7 @@ export function RecordPage() {
     0,
   );
   const totalWinningGames = games.filter((game) => game.winnerIds.length > 0).length;
+  const currentKills = Object.values(effectiveKills).reduce((sum, kills) => sum + kills, 0);
 
   const canSave = n >= 2;
 
@@ -161,51 +165,37 @@ export function RecordPage() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl font-bold tracking-wide">
-            录入对局
-            <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
-            {currentMatch?.name ?? '当前场次'} · 多人实时协同
-            </span>
-          </h1>
-          <p className="mt-1 text-xs text-ink-muted">
-            大家各自填自己的击杀、勾吃鸡，改动会实时同步给房间内所有人。
-          </p>
+    <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
+      <header className="mb-4 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/[0.12] to-panel p-4 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-primary"><span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_10px_rgba(245,166,35,0.9)]" /> 当前待保存对局</div>
+            <h1 className="font-display text-2xl font-bold tracking-wide sm:text-3xl">录入对局 <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">{currentMatch?.name ?? '当前场次'} · 第 {games.length + 1} 局</span></h1>
+            <p className="mt-1 text-xs text-ink-muted">填写击杀、选择吃鸡；所有变动会实时同步给房间成员。</p>
+          </div>
+          <button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-36 gap-2 px-6 text-base disabled:opacity-40">
+            {saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 确认保存本局</>}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => { setEditingActivity('正在调整本局参战人员'); toggleAll(); }}
-          className="tac-btn h-9 px-4 text-sm"
-          disabled={players.length === 0}
-        >
-          {players.length > 0 && players.every((p) => d.participantIds.includes(p.id))
-            ? '全部缺席'
-            : '全员参战'}
-        </button>
-        <button
-          type="button"
-          onClick={() => { setEditingActivity('正在清理本局数据'); void clearCurrentRound(); }}
-          className="tac-btn h-9 px-4 text-sm text-loss"
-          disabled={n === 0}
-        >
-          一键清理
-        </button>
-        <button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-10 px-5 text-sm disabled:opacity-40">
-          {saving ? <Loader2 size={17} className="animate-spin" /> : <><Swords size={17} /> 保存本局</>}
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-primary/20 pt-3 text-xs">
+          <span><b className="num text-base text-primary">{n}</b> 人参战</span><span><b className="num text-base text-ink">{currentKills}</b> 总击杀</span><span><b className="num text-base text-gain">{winnerIds.length}</b> 人吃鸡</span>
+          <span className={`ml-auto font-semibold ${canSave ? 'text-gain' : 'text-primary'}`}>{canSave ? '已满足保存条件' : '至少选择 2 名参战队员'}</span>
+        </div>
       </header>
 
-      <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink-muted">赠分规则</span><span className="text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div>
+      <section className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-panel-2 px-3 py-2.5">
+        <button type="button" onClick={() => { setEditingActivity('正在调整本局参战人员'); toggleAll(); }} className="tac-btn h-9 px-4 text-sm" disabled={players.length === 0}>{players.length > 0 && players.every((p) => d.participantIds.includes(p.id)) ? '全部缺席' : '全员参战'}</button>
+        <button type="button" onClick={() => { setEditingActivity('正在清理本局数据'); void clearCurrentRound(); }} className="tac-btn h-9 px-4 text-sm text-loss" disabled={n === 0}>一键清理</button>
+        <button type="button" onClick={() => setShowGiftRules((open) => !open)} className={`tac-btn ml-auto h-9 gap-1.5 px-3 text-xs ${showGiftRules || giftRules.length > 0 ? 'border border-primary/40 bg-primary/10 text-primary' : 'text-ink-muted'}`}><Gift size={14} /> 赠分规则{giftRules.length > 0 ? `（${giftRules.length}）` : ''}<ChevronDown size={14} className={showGiftRules ? 'rotate-180 transition-transform' : 'transition-transform'} /></button>
       </section>
+
+      {showGiftRules && <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3 animate-fade-in"><div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink">赠分规则</span><span className="mr-1 text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><span className="text-ink-muted">→</span><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div></section>}
 
       <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
         {/* 左侧：录入表格 */}
         <section className="tac-card overflow-hidden">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-            <span>队员（{n} 人参战）</span>
+          <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+            <span>选择参战队员</span>
             <span className="text-center">击杀数</span>
             <span className="text-center">吃鸡</span>
             <span className="text-right">本局积分</span>
