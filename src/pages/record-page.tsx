@@ -347,6 +347,9 @@ export function RecordPage() {
                 .sort((a, b) => {
                   const sa = statsMap.get(a.id)?.totalScore ?? 0;
                   const sb = statsMap.get(b.id)?.totalScore ?? 0;
+                  const aIsBoss = highestNegativeScore !== null && sa === highestNegativeScore;
+                  const bIsBoss = highestNegativeScore !== null && sb === highestNegativeScore;
+                  if (aIsBoss !== bIsBoss) return aIsBoss ? -1 : 1;
                   return sb - sa;
                 })
                 .map((p, i) => {
@@ -354,7 +357,7 @@ export function RecordPage() {
                   const total = stat?.totalScore ?? 0;
                   const isHighestNegative = highestNegativeScore !== null && total === highestNegativeScore;
                   return (
-                    <div key={p.id} className={`relative overflow-hidden rounded-lg border px-3 py-2.5 text-sm ${isHighestNegative ? 'border-primary bg-gradient-to-r from-primary/25 via-amber-400/10 to-primary/20 shadow-[0_0_0_1px_rgba(245,166,35,0.45),0_0_20px_rgba(245,166,35,0.22)]' : 'border-line/70 bg-panel/80'}`}>
+                    <div key={p.id} className={`relative overflow-hidden rounded-lg border px-3 py-2.5 text-sm ${isHighestNegative ? 'border-amber-300 bg-gradient-to-r from-amber-500/25 via-primary/12 to-amber-500/20 ring-1 ring-primary/50 shadow-[inset_0_0_0_1px_rgba(255,236,168,0.24),0_0_18px_rgba(245,166,35,0.30)]' : 'border-line/70 bg-panel/80'}`}>
                       <div className="flex items-center justify-between gap-2">
                         <span className="relative flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : isHighestNegative ? 'bg-primary text-black shadow-[0_0_12px_rgba(245,166,35,0.7)]' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="min-w-0"><span className="block truncate font-semibold">{p.name}</span>{isHighestNegative && <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-primary"><Crown size={11} fill="currentColor" />尊贵老板席位</span>}</span></span>
                         <span className={`relative min-w-[92px] rounded-lg border px-2.5 py-1 text-center ${isHighestNegative ? 'border-primary/55 bg-panel/85' : total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className={`flex items-center justify-center gap-1 text-[9px] font-semibold tracking-wider ${isHighestNegative ? 'text-primary/85' : 'text-ink-muted'}`}>{isHighestNegative ? <><Crown size={10} fill="currentColor" />老板积分</> : <><Trophy size={9} />总积分</>}</span><span
