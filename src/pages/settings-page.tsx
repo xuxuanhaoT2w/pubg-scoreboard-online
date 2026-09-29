@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   Check,
   Copy,
+  DoorOpen,
   LogOut,
   Pencil,
   Plus,
@@ -42,6 +43,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [copied, setCopied] = useState(false);
+  const [showMaintenance, setShowMaintenance] = useState(false);
 
   const playerGameCount = (id: string): number =>
     games.filter((g) => g.participantIds.includes(id)).length;
@@ -162,29 +164,31 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
-      <h1 className="mb-5 font-display text-2xl font-bold tracking-wide">
-        设置
-        <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">
-          CONFIG
-        </span>
-      </h1>
+    <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div className="mb-1 flex items-center gap-2 text-xs font-semibold text-primary"><span className="h-2 w-2 rounded-full bg-primary" /> 房间设置</div>
+          <h1 className="font-display text-2xl font-bold tracking-wide sm:text-3xl">房间管理 <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">ROOM CONTROL</span></h1>
+          <p className="mt-1 text-xs text-ink-muted">邀请队友、维护队员与管理当前房间数据。</p>
+        </div>
+        <button type="button" className="tac-btn h-10 gap-2 border border-line bg-panel-2 px-4 text-sm" onClick={() => onNavigate('room-manager')}><DoorOpen size={16} className="text-primary" /> 切换房间</button>
+      </header>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
         {/* 房间信息与分享 */}
-        <section className="tac-card clip-tl p-5">
-          <h2 className="mb-3 flex items-center gap-2 font-display text-base font-bold">
+        <section className="tac-card border-primary/40 bg-gradient-to-br from-primary/[0.10] to-panel p-5">
+          <h2 className="mb-4 flex items-center gap-2 font-display text-base font-bold">
             <Share2 size={17} className="text-primary" /> 房间与邀请
           </h2>
           <div className="space-y-3">
-            <div>
-              <div className="text-xs text-ink-muted">房间名称</div>
-              <div className="mt-0.5 text-lg font-bold">{room?.name}</div>
+            <div className="flex items-start justify-between gap-3">
+              <div><div className="text-xs text-ink-muted">当前房间</div><div className="mt-0.5 text-xl font-bold text-ink">{room?.name}</div></div>
+              <div className="rounded-lg border border-primary/45 bg-panel/70 px-3 py-2 text-right"><div className="text-[10px] text-ink-muted">房间码</div><button type="button" className="num mt-0.5 font-display text-lg font-bold tracking-[0.18em] text-primary" onClick={() => handleCopy(room?.join_code ?? '', '房间码')}>{room?.join_code}</button></div>
             </div>
-            <div className="rounded-lg border border-primary/25 bg-primary/[0.06] px-3 py-2">
+            <div className="rounded-lg border border-primary/25 bg-panel/55 px-3 py-3">
               <div className="text-xs text-ink-muted">当前场次</div>
-              <div className="mt-0.5 flex items-center justify-between gap-3">
-                <span className="font-semibold">{currentMatch?.name ?? '未创建场次'} · {games.length} 局</span>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <span className="font-semibold">{currentMatch?.name ?? '未创建场次'} <span className="ml-1 text-xs font-normal text-ink-muted">· 已录入 {games.length} 局</span></span>
                 <button
                   type="button"
                   className="tac-btn h-8 px-3 text-xs text-primary"
@@ -197,39 +201,11 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
                 >结束场次</button>
               </div>
             </div>
-            <div>
-              <div className="text-xs text-ink-muted">房间码（发给队友加入）</div>
-              <div className="mt-1 flex items-center gap-2">
-                <span className="num rounded-lg border border-primary/40 bg-panel-2 px-4 py-2 text-center font-display text-2xl font-bold tracking-[0.4em] text-primary">
-                  {room?.join_code}
-                </span>
-                <button
-                  type="button"
-                  className="tac-btn h-10 px-3"
-                  onClick={() => handleCopy(room?.join_code ?? '', '房间码')}
-                >
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                </button>
-              </div>
-            </div>
-            <div>
-              <div className="text-xs text-ink-muted">邀请链接（含自动加入）</div>
-              <button
-                type="button"
-                onClick={() => handleCopy(shareUrl, '邀请链接')}
-                className="mt-1 flex w-full items-center gap-2 rounded-lg border border-line bg-panel-2 px-3 py-2 text-left text-xs text-ink-muted hover:border-primary/40"
-              >
-                <Share2 size={13} className="shrink-0 text-primary" />
-                <span className="truncate">{shareUrl}</span>
-              </button>
-            </div>
-            <p className="rounded-lg bg-panel-2 px-3 py-2 text-[11px] leading-relaxed text-ink-muted">
-              队友打开链接会自动进入本房间；也可让队友在首页「输入房间码加入」输入上面 6 位码。
-              数据实时云端同步，大家看到的是同一份战绩。
-            </p>
-            <div className="rounded-lg border border-line bg-panel-2 p-3">
-              <div className="mb-1 text-xs font-semibold text-ink-muted">房间维护</div>
-              <p className="mb-3 text-[11px] leading-relaxed text-ink-muted">退出只会清除本设备的加入状态，房间码、成员、场次和对局会继续保留在云端。</p>
+            <div className="grid grid-cols-2 gap-2"><button type="button" className="tac-btn h-11 gap-2 border border-primary/40 bg-primary/15 px-3 text-sm text-primary" onClick={() => handleCopy(room?.join_code ?? '', '房间码')}>{copied ? <Check size={16} /> : <Copy size={16} />}复制房间码</button><button type="button" className="tac-btn tac-btn-primary h-11 gap-2 px-3 text-sm" onClick={() => handleCopy(shareUrl, '邀请链接')}><Share2 size={16} />复制邀请链接</button></div>
+            <p className="text-[11px] leading-relaxed text-ink-muted">队友打开邀请链接可自动进入本房间；也可在首页输入 6 位房间码。所有场次与战绩均实时同步。</p>
+            <div className="rounded-lg border border-line bg-panel/70 p-3">
+              <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => setShowMaintenance((show) => !show)}><span><span className="block text-xs font-semibold text-ink">房间维护</span><span className="mt-0.5 block text-[11px] text-ink-muted">切换、退出、清理缓存与永久删除</span></span><span className="text-xs text-primary">{showMaintenance ? '收起' : '展开'}</span></button>
+              {showMaintenance && <div className="mt-3 border-t border-line pt-3 animate-fade-in"><p className="mb-3 text-[11px] leading-relaxed text-ink-muted">退出只清除本设备加入状态，云端房间和战绩仍会保留。</p>
               <button type="button" className="tac-btn h-10 w-full" onClick={() => onNavigate('room-manager')}>管理全部房间</button>
               <button
                 type="button"
@@ -268,6 +244,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
               >
                 <Trash2 size={15} /> 永久删除房间
               </button>
+              </div>}
             </div>
           </div>
         </section>
