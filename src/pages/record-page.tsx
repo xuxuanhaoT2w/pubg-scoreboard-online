@@ -350,12 +350,12 @@ export function RecordPage() {
                     <div key={p.id} className="rounded-lg border border-line/70 bg-panel/80 px-3 py-2.5 text-sm">
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="truncate font-semibold">{p.name}</span></span>
-                        <span className="text-right"><span className="block text-[10px] text-ink-muted">总积分</span><span
-                        className={`num text-base font-bold tabular-nums ${
-                          total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
-                        }`}
-                      >
-                        {formatScore(total)}
+                        <span className={`min-w-[76px] rounded-lg border px-2.5 py-1 text-center ${total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className="block text-[9px] font-semibold tracking-wider text-ink-muted">总积分</span><span
+                          className={`num block text-xl font-bold leading-5 tabular-nums ${
+                            total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
+                          }`}
+                        >
+                          {formatScore(total)}
                         </span></span>
                       </div>
                       <div className="mt-2 grid grid-cols-3 divide-x divide-line/80 rounded bg-panel-2/80 py-1.5 text-center"><div><span className="block text-[9px] text-ink-muted">参战局数</span><b className="num text-sm text-ink">{stat?.games ?? 0}</b></div><div><span className="block text-[9px] text-ink-muted">总击杀</span><b className="num text-sm text-primary">{stat?.totalKills ?? 0}</b></div><div><span className="block text-[9px] text-ink-muted">吃鸡数</span><b className="num text-sm text-gain">{stat?.wins ?? 0}</b></div></div>
