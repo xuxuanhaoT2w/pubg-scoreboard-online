@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Crosshair, Loader2 } from 'lucide-react';
+import { Crosshair, Loader2, Radio } from 'lucide-react';
 import './index.css';
 import { RoomStoreProvider, useAppStore } from './store/app-store';
 import { NavBar, type TabKey } from './components/nav-bar';
@@ -16,7 +16,7 @@ import { IdentityBar } from './components/identity-bar';
 import { MemberPresenceBar } from './components/member-presence-bar';
 
 function App() {
-  const { status, joinRoom, ready, currentMatch, games, players, onlinePlayerIds, onlineTemporaryCount } = useAppStore();
+  const { status, joinRoom, ready, currentMatch, games, onlinePlayerIds, onlineTemporaryCount } = useAppStore();
   const [tab, setTab] = useState<TabKey>('record');
 
   // 支持通过分享链接自动加入：?join=房间码
@@ -54,12 +54,12 @@ function App() {
   return (
     <div className="min-h-screen">
       <NavBar active={tab} onChange={setTab} />
-      <div className="border-b border-line bg-panel-2/60">
-        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-1.5 text-xs sm:px-6">
-          <span className="text-ink-muted">当前场次</span>
-          <span className="font-bold text-primary">{currentMatch?.name ?? '未创建场次'}</span>
-          <span className="text-ink-muted">· {games.length} 局</span>
-          <span className="ml-auto flex items-center gap-1.5 text-gain"><span className="h-1.5 w-1.5 rounded-full bg-gain" /> 在线 {onlinePlayerIds.length + onlineTemporaryCount}{(onlinePlayerIds.length > 0 || onlineTemporaryCount > 0) && <span className="hidden sm:inline text-ink-muted">· {[players.filter((player) => onlinePlayerIds.includes(player.id)).map((player) => player.name).join('、'), onlineTemporaryCount > 0 ? `临时用户 ×${onlineTemporaryCount}` : ''].filter(Boolean).join('、')}</span>}</span>
+      <div className="border-b border-line bg-panel-2/70">
+        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 text-xs sm:px-6">
+          <span className="rounded bg-primary/15 px-2 py-1 font-semibold text-primary">当前场次</span>
+          <span className="font-bold text-ink">{currentMatch?.name ?? '未创建场次'}</span>
+          <span className="text-ink-muted">第 {games.length + 1} 局待录入</span>
+          <span className={`ml-auto flex items-center gap-1.5 font-semibold ${onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'text-gain' : 'text-ink-muted'}`}><Radio size={13} className={onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'animate-pulse' : ''} /> 实时协作中</span>
         </div>
       </div>
       <MemberPresenceBar />
