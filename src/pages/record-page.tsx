@@ -6,6 +6,7 @@ import {
   Loader2,
   Minus,
   Plus,
+  Skull,
   Swords,
   Trophy,
   Users,
@@ -62,6 +63,10 @@ export function RecordPage() {
   );
   const totalWinningGames = games.filter((game) => game.winnerIds.length > 0).length;
   const currentKills = Object.values(effectiveKills).reduce((sum, kills) => sum + kills, 0);
+  const highestNegativeScore = rankedPlayers.reduce<number | null>((lowest, player) => {
+    const score = statsMap.get(player.id)?.totalScore ?? 0;
+    return score < 0 && (lowest === null || score < lowest) ? score : lowest;
+  }, null);
 
   const canSave = n >= 2;
 
@@ -331,9 +336,9 @@ export function RecordPage() {
               <h2 className="font-display text-base font-bold tracking-wider text-primary">当场排行榜</h2>
             </div>
             <div className="mb-3 grid grid-cols-3 divide-x divide-line rounded-lg border border-line bg-panel/70 py-2">
-              <div className="text-center"><div className="text-[10px] text-ink-muted">已录入</div><div className="num mt-0.5 text-base font-bold text-ink">{games.length}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
-              <div className="text-center"><div className="text-[10px] text-ink-muted">总击杀</div><div className="num mt-0.5 text-base font-bold text-primary">{totalKills}<span className="ml-0.5 text-[10px] font-normal">杀</span></div></div>
-              <div className="text-center"><div className="text-[10px] text-ink-muted">吃鸡局数</div><div className="num mt-0.5 text-base font-bold text-gain">{totalWinningGames}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
+              <div className="text-center"><div className="flex items-center justify-center gap-1 text-[10px] text-ink-muted"><Swords size={10} />已录入</div><div className="num mt-0.5 text-base font-bold text-ink">{games.length}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
+              <div className="text-center"><div className="flex items-center justify-center gap-1 text-[10px] text-ink-muted"><Skull size={10} />总击杀</div><div className="num mt-0.5 text-base font-bold text-primary">{totalKills}<span className="ml-0.5 text-[10px] font-normal">杀</span></div></div>
+              <div className="text-center"><div className="flex items-center justify-center gap-1 text-[10px] text-ink-muted"><Trophy size={10} />吃鸡局数</div><div className="num mt-0.5 text-base font-bold text-gain">{totalWinningGames}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
             </div>
             <div className="space-y-1.5">
               {rankedPlayers
@@ -346,11 +351,12 @@ export function RecordPage() {
                 .map((p, i) => {
                   const stat = statsMap.get(p.id);
                   const total = stat?.totalScore ?? 0;
+                  const isHighestNegative = highestNegativeScore !== null && total === highestNegativeScore;
                   return (
-                    <div key={p.id} className="rounded-lg border border-line/70 bg-panel/80 px-3 py-2.5 text-sm">
+                    <div key={p.id} className={`rounded-lg border px-3 py-2.5 text-sm ${isHighestNegative ? 'border-loss bg-loss/[0.08] shadow-[0_0_0_1px_rgba(239,68,68,0.18)]' : 'border-line/70 bg-panel/80'}`}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="truncate font-semibold">{p.name}</span></span>
-                        <span className={`min-w-[76px] rounded-lg border px-2.5 py-1 text-center ${total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className="block text-[9px] font-semibold tracking-wider text-ink-muted">总积分</span><span
+                        <span className="flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : isHighestNegative ? 'bg-loss text-white' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="min-w-0"><span className="block truncate font-semibold">{p.name}</span>{isHighestNegative && <span className="mt-0.5 block text-[10px] font-semibold text-loss">本场最高负分</span>}</span></span>
+                        <span className={`min-w-[76px] rounded-lg border px-2.5 py-1 text-center ${total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className={`flex items-center justify-center gap-1 text-[9px] font-semibold tracking-wider ${isHighestNegative ? 'text-loss' : 'text-ink-muted'}`}>{isHighestNegative ? <><Skull size={9} />最高负分</> : <><Trophy size={9} />总积分</>}</span><span
                           className={`num block text-xl font-bold leading-5 tabular-nums ${
                             total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
                           }`}
@@ -358,7 +364,7 @@ export function RecordPage() {
                           {formatScore(total)}
                         </span></span>
                       </div>
-                      <div className="mt-2 grid grid-cols-3 divide-x divide-line/80 rounded bg-panel-2/80 py-1.5 text-center"><div><span className="block text-[9px] text-ink-muted">参战局数</span><b className="num text-sm text-ink">{stat?.games ?? 0}</b></div><div><span className="block text-[9px] text-ink-muted">总击杀</span><b className="num text-sm text-primary">{stat?.totalKills ?? 0}</b></div><div><span className="block text-[9px] text-ink-muted">吃鸡数</span><b className="num text-sm text-gain">{stat?.wins ?? 0}</b></div></div>
+                      <div className="mt-2 grid grid-cols-3 divide-x divide-line/80 rounded bg-panel-2/80 py-1.5 text-center"><div><span className="flex items-center justify-center gap-0.5 text-[9px] text-ink-muted"><Swords size={9} />参战</span><b className="num text-sm text-ink">{stat?.games ?? 0}</b></div><div><span className="flex items-center justify-center gap-0.5 text-[9px] text-ink-muted"><Skull size={9} />击杀</span><b className="num text-sm text-primary">{stat?.totalKills ?? 0}</b></div><div><span className="flex items-center justify-center gap-0.5 text-[9px] text-ink-muted"><Trophy size={9} />吃鸡</span><b className="num text-sm text-gain">{stat?.wins ?? 0}</b></div></div>
                     </div>
                   );
                 })}
