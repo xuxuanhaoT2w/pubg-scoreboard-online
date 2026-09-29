@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Crosshair,
+  Crown,
   ChevronDown,
   Gift,
   Loader2,
@@ -353,10 +354,11 @@ export function RecordPage() {
                   const total = stat?.totalScore ?? 0;
                   const isHighestNegative = highestNegativeScore !== null && total === highestNegativeScore;
                   return (
-                    <div key={p.id} className={`rounded-lg border px-3 py-2.5 text-sm ${isHighestNegative ? 'border-loss bg-loss/[0.08] shadow-[0_0_0_1px_rgba(239,68,68,0.18)]' : 'border-line/70 bg-panel/80'}`}>
+                    <div key={p.id} className={`relative overflow-hidden rounded-lg border px-3 py-2.5 text-sm ${isHighestNegative ? 'border-primary bg-gradient-to-r from-primary/25 via-amber-400/10 to-primary/20 shadow-[0_0_0_1px_rgba(245,166,35,0.45),0_0_20px_rgba(245,166,35,0.22)]' : 'border-line/70 bg-panel/80'}`}>
+                      {isHighestNegative && <span className="absolute right-0 top-0 h-10 w-16 bg-gradient-to-bl from-primary/35 to-transparent" />}
                       <div className="flex items-center justify-between gap-2">
-                        <span className="flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : isHighestNegative ? 'bg-loss text-white' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="min-w-0"><span className="block truncate font-semibold">{p.name}</span>{isHighestNegative && <span className="mt-0.5 block text-[10px] font-semibold text-loss">本场最高负分</span>}</span></span>
-                        <span className={`min-w-[76px] rounded-lg border px-2.5 py-1 text-center ${total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className={`flex items-center justify-center gap-1 text-[9px] font-semibold tracking-wider ${isHighestNegative ? 'text-loss' : 'text-ink-muted'}`}>{isHighestNegative ? <><Skull size={9} />最高负分</> : <><Trophy size={9} />总积分</>}</span><span
+                        <span className="relative flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : isHighestNegative ? 'bg-primary text-black shadow-[0_0_12px_rgba(245,166,35,0.7)]' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="min-w-0"><span className="block truncate font-semibold">{p.name}</span>{isHighestNegative && <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-primary"><Crown size={11} fill="currentColor" />尊贵老板席位</span>}</span></span>
+                        <span className={`relative min-w-[92px] rounded-lg border px-2.5 py-1 text-center ${isHighestNegative ? 'border-primary bg-primary/20' : total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className={`flex items-center justify-center gap-1 text-[9px] font-semibold tracking-wider ${isHighestNegative ? 'text-primary' : 'text-ink-muted'}`}>{isHighestNegative ? <><Crown size={10} fill="currentColor" />老板积分</> : <><Trophy size={9} />总积分</>}</span><span
                           className={`num block text-xl font-bold leading-5 tabular-nums ${
                             total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
                           }`}
