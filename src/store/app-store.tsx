@@ -13,6 +13,7 @@ import { APP_RELEASE } from '../lib/release';
 import {
   addPlayer as apiAddPlayer,
   archivePlayerNameInGames,
+  backfillGamePlayerNames,
   createRoom as apiCreateRoom,
   createMatch as apiCreateMatch,
   deleteRoom as apiDeleteRoom,
@@ -160,6 +161,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     ]);
     const active = allMatches.find((match) => match.status === 'active') ?? null;
     const g = active ? await listGames(roomId, active.id) : [];
+    void backfillGamePlayerNames(roomId, p).catch(() => {
+      // 快照补齐失败不阻断房间进入；后续进入仍会再次尝试。
+    });
     setPlayers(p);
     setGames(g);
     setMatches(allMatches);

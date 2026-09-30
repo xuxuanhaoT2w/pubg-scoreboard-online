@@ -292,6 +292,22 @@ export async function archivePlayerNameInGames(roomId: string, player: Player): 
   }));
 }
 
+/** 为旧对局补齐仍可识别的参赛者昵称快照，不改动任何积分或对局数据。 */
+export async function backfillGamePlayerNames(roomId: string, players: Player[]): Promise<void> {
+  const namesById = new Map(players.map((player) => [player.id, player.name]));
+  const { data, error } = await db().from('games').select('id,data').eq('room_id', roomId);
+  if (error) throw error;
+  const rows = (data ?? []) as Pick<GameRow, 'id' | 'data'>[];
+  await Promise.all(rows.map(async (row) => {
+    const additions = Object.fromEntries(row.data.participantIds
+      .filter((id) => !row.data.playerNames?.[id] && namesById.has(id))
+      .map((id) => [id, namesById.get(id)!]));
+    if (Object.keys(additions).length === 0) return;
+    const { error: updateError } = await db().from('games').update({ data: { ...row.data, playerNames: { ...(row.data.playerNames ?? {}), ...additions } } }).eq('id', row.id);
+    if (updateError) throw updateError;
+  }));
+}
+
 // ---------- 场次 ----------
 export async function createMatch(roomId: string, name: string): Promise<Match> {
   const { data, error } = await db()
