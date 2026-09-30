@@ -91,6 +91,18 @@ const meKey = (roomId: string): string => `pubg.me.${roomId}`;
 const DEFAULT_SEEDS = ['阿杰', '老K', '猴子', '狗子'];
 const MAX_PLAYERS = 16;
 
+/** 场次删减后按开始时间连续编号；只更新实际不一致的记录。 */
+async function normalizeMatchNumbers(matches: Match[]): Promise<Match[]> {
+  const chronological = [...matches].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+  const numbered = await Promise.all(chronological.map(async (match, index) => {
+    const name = `第 ${index + 1} 场`;
+    if (match.name !== name) await apiRenameMatch(match.id, name);
+    return { ...match, name };
+  }));
+  const namesById = new Map(numbered.map((match) => [match.id, match.name]));
+  return matches.map((match) => ({ ...match, name: namesById.get(match.id) ?? match.name }));
+}
+
 function readRoomId(): string | null {
   try {
     return localStorage.getItem(ROOM_KEY);
@@ -162,14 +174,15 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       listMatches(roomId),
       getDraft(roomId),
     ]);
-    const active = allMatches.find((match) => match.status === 'active') ?? null;
+    const numberedMatches = await normalizeMatchNumbers(allMatches);
+    const active = numberedMatches.find((match) => match.status === 'active') ?? null;
     const g = active ? await listGames(roomId, active.id) : [];
     void backfillGamePlayerNames(roomId, p).catch(() => {
       // 快照补齐失败不阻断房间进入；后续进入仍会再次尝试。
     });
     setPlayers(p);
     setGames(g);
-    setMatches(allMatches);
+    setMatches(numberedMatches);
     const playerIds = new Set(p.map((player) => player.id));
     setDraft({
       participantIds: d.participantIds.filter((id) => playerIds.has(id)),
@@ -529,16 +542,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     const match = matches.find((item) => item.id === matchId);
     if (!match || match.status !== 'ended') throw new Error('只能删除已结束的历史场次');
     await apiDeleteMatchWithGames(room.id, matchId);
-    const remaining = matches.filter((item) => item.id !== matchId);
-    const chronological = [...remaining].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
-    const renamed = await Promise.all(chronological.map(async (item, index) => {
-      const name = `第 ${index + 1} 场`;
-      if (item.name !== name) await apiRenameMatch(item.id, name);
-      return { ...item, name };
-    }));
-    const namesById = new Map(renamed.map((item) => [item.id, item.name]));
-    setMatches((previous) => previous
-      .filter((item) => item.id !== matchId)
+    const renumbered = await normalizeMatchNumbers(matches.filter((item) => item.id !== matchId));
+    const namesById = new Map(renumbered.map((item) => [item.id, item.name]));
+    setMatches((previous) => previous.filter((item) => item.id !== matchId)
       .map((item) => ({ ...item, name: namesById.get(item.id) ?? item.name })));
   }, [room, matches]);
 
