@@ -337,6 +337,15 @@ export async function endMatch(matchId: string): Promise<void> {
   if (error) throw error;
 }
 
+/** 场次编号会随历史场次删除重新排列，确保所有设备展示一致。 */
+export async function renameMatch(matchId: string, name: string): Promise<void> {
+  const { error } = await db()
+    .from('matches')
+    .update({ name })
+    .eq('id', matchId);
+  if (error) throw error;
+}
+
 export async function deleteGameRow(gameId: string): Promise<void> {
   const { error } = await db().from('games').delete().eq('id', gameId);
   if (error) throw error;

@@ -30,6 +30,7 @@ import {
   listGames,
   listMatches,
   listPlayers,
+  renameMatch as apiRenameMatch,
   renamePlayer as apiRenamePlayer,
   saveDraft as apiSaveDraft,
   subscribeRoom,
@@ -528,7 +529,17 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     const match = matches.find((item) => item.id === matchId);
     if (!match || match.status !== 'ended') throw new Error('只能删除已结束的历史场次');
     await apiDeleteMatchWithGames(room.id, matchId);
-    setMatches((previous) => previous.filter((item) => item.id !== matchId));
+    const remaining = matches.filter((item) => item.id !== matchId);
+    const chronological = [...remaining].sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+    const renamed = await Promise.all(chronological.map(async (item, index) => {
+      const name = `第 ${index + 1} 场`;
+      if (item.name !== name) await apiRenameMatch(item.id, name);
+      return { ...item, name };
+    }));
+    const namesById = new Map(renamed.map((item) => [item.id, item.name]));
+    setMatches((previous) => previous
+      .filter((item) => item.id !== matchId)
+      .map((item) => ({ ...item, name: namesById.get(item.id) ?? item.name })));
   }, [room, matches]);
 
   const updateDraft = useCallback(
