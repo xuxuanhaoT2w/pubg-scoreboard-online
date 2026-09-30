@@ -73,7 +73,8 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
         {sorted.map((game, idx) => {
           const winnerSet = new Set(game.winnerIds);
           const totalKills = Object.values(game.kills).reduce((a, b) => a + b, 0);
-          const winNames = game.winnerIds.map(playerName).filter((n) => n !== '已离队');
+          const nameForGame = (id: string) => game.playerNames?.[id] ?? playerName(id);
+          const winNames = game.winnerIds.map(nameForGame).filter((n) => n !== '已离队');
           return (
             <div key={game.id} className="tac-card overflow-hidden">
               <div className="flex items-center justify-between border-b border-line bg-panel-2 px-4 py-2.5">
@@ -105,7 +106,7 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
                   <Trophy size={13} /> 吃鸡：{winNames.join('、')}
                 </div>
               )}
-              {(game.giftRules?.length ?? 0) > 0 && <div className="border-b border-line/50 px-4 py-1.5 text-xs text-primary">赠分：{game.giftRules!.map((rule) => `${playerName(rule.fromId)} → ${playerName(rule.toId)} +1`).join('；')}</div>}
+              {(game.giftRules?.length ?? 0) > 0 && <div className="border-b border-line/50 px-4 py-1.5 text-xs text-primary">赠分：{game.giftRules!.map((rule) => `${nameForGame(rule.fromId)} → ${nameForGame(rule.toId)} +1`).join('；')}</div>}
               <div className="divide-y divide-line/50">
                 {game.participantIds.map((id) => {
                   const score = game.scores[id] ?? 0;
@@ -118,7 +119,7 @@ export function HistoryPage({ onNavigate }: HistoryPageProps) {
                         <span className="w-[13px] shrink-0" />
                       )}
                       <span className="min-w-0 flex-1 truncate text-sm font-medium">
-                        {playerName(id)}
+                        {nameForGame(id)}
                       </span>
                       <span className="num w-12 text-right text-xs text-ink-muted">
                         {game.kills[id] ?? 0} 杀

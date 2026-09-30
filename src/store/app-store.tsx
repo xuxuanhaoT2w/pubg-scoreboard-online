@@ -12,6 +12,7 @@ import type { Game, Match, Player } from '../lib/types';
 import { APP_RELEASE } from '../lib/release';
 import {
   addPlayer as apiAddPlayer,
+  archivePlayerNameInGames,
   createRoom as apiCreateRoom,
   createMatch as apiCreateMatch,
   deleteRoom as apiDeleteRoom,
@@ -451,14 +452,15 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
 
   const removePlayer = useCallback(
     async (id: string) => {
-      if (games.some((g) => g.participantIds.includes(id))) {
-        throw new Error('该队员已有对局记录，请先在历史中删除相关对局');
-      }
+      if (!room) throw new Error('尚未进入房间');
+      const player = players.find((item) => item.id === id);
+      if (!player) return;
+      await archivePlayerNameInGames(room.id, player);
       await apiDeletePlayer(id);
       setPlayers((prev) => prev.filter((p) => p.id !== id));
       if (meId === id) setMe(null);
     },
-    [games, meId, setMe],
+    [room, players, meId, setMe],
   );
 
   const commitGame = useCallback(

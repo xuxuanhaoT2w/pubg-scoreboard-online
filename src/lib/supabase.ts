@@ -280,6 +280,18 @@ export async function insertGame(
   return rowToGame(data as GameRow);
 }
 
+/** 队员离开当前名单前，将其昵称写入所有相关历史对局的 JSON 快照。 */
+export async function archivePlayerNameInGames(roomId: string, player: Player): Promise<void> {
+  const { data, error } = await db().from('games').select('id,data').eq('room_id', roomId);
+  if (error) throw error;
+  const rows = (data ?? []) as Pick<GameRow, 'id' | 'data'>[];
+  const affected = rows.filter((row) => row.data.participantIds.includes(player.id) && row.data.playerNames?.[player.id] !== player.name);
+  await Promise.all(affected.map(async (row) => {
+    const { error: updateError } = await db().from('games').update({ data: { ...row.data, playerNames: { ...(row.data.playerNames ?? {}), [player.id]: player.name } } }).eq('id', row.id);
+    if (updateError) throw updateError;
+  }));
+}
+
 // ---------- 场次 ----------
 export async function createMatch(roomId: string, name: string): Promise<Match> {
   const { data, error } = await db()
@@ -463,6 +475,7 @@ function rowToGame(r: GameRow): Game {
     winnerIds: r.data.winnerIds,
     giftRules: r.data.giftRules,
     scores: r.data.scores,
+    playerNames: r.data.playerNames,
   };
 }
 

@@ -18,6 +18,8 @@ export interface Game {
   giftRules?: GiftRule[];
   /** playerId -> 本局得分（零和） */
   scores: Record<string, number>;
+  /** playerId -> 录入当时的昵称；用于队员离开后仍保留历史明细与排名 */
+  playerNames?: Record<string, string>;
 }
 
 export interface GiftRule {

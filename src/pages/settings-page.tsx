@@ -127,14 +127,9 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
   };
 
   const handleDelete = async (id: string, name: string) => {
-    const count = playerGameCount(id);
-    if (count > 0) {
-      toast.error(`「${name}」已有 ${count} 局记录，请先在历史中删除相关对局`);
-      return;
-    }
     const ok = await confirm({
       title: `删除队员「${name}」？`,
-      message: '该队员暂无对局记录，删除后所有成员的列表中都会移除。',
+      message: '将从当前房间队员名单移除。该队员的历史场次、对局明细和积分排名会完整保留。',
       confirmText: '删除',
       cancelText: '取消',
       danger: true,

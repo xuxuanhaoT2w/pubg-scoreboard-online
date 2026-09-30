@@ -160,6 +160,7 @@ export function RecordPage() {
         winnerIds,
         giftRules,
         scores: liveScores,
+        playerNames: Object.fromEntries(participantIds.map((player) => [player.id, player.name])),
       };
       await commitGame(game);
       toast.success('战绩已入库，总分已累计 · 可接着记下一局');

@@ -77,3 +77,14 @@ export function computeStats(players: Player[], games: Game[]): PlayerStats[] {
       a.player.name.localeCompare(b.player.name, 'zh'),
   );
 }
+
+/** 合并当前队员与对局昵称快照，确保历史场次不依赖当前名单。 */
+export function playersWithGameSnapshots(players: Player[], games: Game[]): Player[] {
+  const map = new Map(players.map((player) => [player.id, player]));
+  for (const game of games) {
+    for (const id of game.participantIds) {
+      if (!map.has(id)) map.set(id, { id, name: game.playerNames?.[id] ?? '已移除队员' });
+    }
+  }
+  return Array.from(map.values());
+}
