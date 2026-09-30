@@ -19,6 +19,7 @@ import {
   deleteRoom as apiDeleteRoom,
   deleteGameRow,
   deleteMatchGames,
+  deleteMatchWithGames as apiDeleteMatchWithGames,
   endMatch as apiEndMatch,
   deletePlayer as apiDeletePlayer,
   getDraft,
@@ -63,6 +64,7 @@ interface RoomStore {
   clearDeviceCache: () => Promise<void>;
   deleteRoom: () => Promise<void>;
   endCurrentMatch: () => Promise<void>;
+  deleteEndedMatch: (matchId: string) => Promise<void>;
   // 身份
   setMe: (playerId: string | null) => void;
   setEditingActivity: (activity: string | null) => void;
@@ -521,6 +523,14 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     setDraft(reset);
   }, [room, matches, players, meId, setDraft]);
 
+  const deleteEndedMatch = useCallback(async (matchId: string) => {
+    if (!room) throw new Error('尚未进入房间');
+    const match = matches.find((item) => item.id === matchId);
+    if (!match || match.status !== 'ended') throw new Error('只能删除已结束的历史场次');
+    await apiDeleteMatchWithGames(room.id, matchId);
+    setMatches((previous) => previous.filter((item) => item.id !== matchId));
+  }, [room, matches]);
+
   const updateDraft = useCallback(
     async (updater: (prev: DraftPayload) => DraftPayload) => {
       if (!room) return;
@@ -566,6 +576,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       clearDeviceCache,
       deleteRoom,
       endCurrentMatch,
+      deleteEndedMatch,
       setMe,
       setEditingActivity,
       addPlayer,
@@ -596,6 +607,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       leaveRoom,
       clearDeviceCache,
       deleteRoom,
+      endCurrentMatch,
+      deleteEndedMatch,
       setMe,
       setEditingActivity,
       addPlayer,

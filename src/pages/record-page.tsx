@@ -22,7 +22,7 @@ import type { DraftPayload } from '../lib/supabase';
 import type { Game } from '../lib/types';
 
 export function RecordPage() {
-  const { players, games, draft, meId, updateDraft, commitGame, currentMatch, setEditingActivity } = useAppStore();
+  const { players, games, draft, meId, updateDraft, commitGame, currentMatch, endCurrentMatch, setEditingActivity } = useAppStore();
   const toast = useToast();
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
@@ -171,6 +171,17 @@ export function RecordPage() {
     }
   };
 
+  const handleEndMatch = async () => {
+    const ok = await confirm({ title: '结束当前场次？', message: '本场将保存到历史场次，并立即开启下一场；当前排行榜和对局记录将从新场次重新开始。', confirmText: '结束并开始下一场', cancelText: '取消', danger: true });
+    if (!ok) return;
+    try {
+      await endCurrentMatch();
+      toast.success('当前场次已结束，可在「查看历史场次」中查看');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '结束场次失败');
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-5 sm:px-6 sm:py-6">
       <header className="mb-4 rounded-xl border border-primary/30 bg-gradient-to-r from-primary/[0.12] to-panel p-4 sm:p-5">
@@ -180,9 +191,9 @@ export function RecordPage() {
             <h1 className="font-display text-2xl font-bold tracking-wide sm:text-3xl">录入对局 <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">{currentMatch?.name ?? '当前场次'} · 第 {games.length + 1} 局</span></h1>
             <p className="mt-1 text-xs text-ink-muted">填写击杀、选择吃鸡；所有变动会实时同步给房间成员。</p>
           </div>
-          <button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-36 gap-2 px-6 text-base disabled:opacity-40">
-            {saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 确认保存本局</>}
-          </button>
+          <div className="flex flex-wrap items-center justify-end gap-2"><button type="button" onClick={() => void handleEndMatch()} disabled={!currentMatch} className="tac-btn h-10 gap-1.5 border border-primary/45 bg-panel/80 px-4 text-sm text-primary disabled:opacity-40"><Trophy size={16} /> 结束当前场次</button><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-36 gap-2 px-6 text-base disabled:opacity-40">
+              {saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 确认保存本局</>}
+            </button></div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-primary/20 pt-3 text-xs">
           <span><b className="num text-base text-primary">{n}</b> 人参战</span><span><b className="num text-base text-ink">{currentKills}</b> 总击杀</span><span><b className="num text-base text-gain">{winnerIds.length}</b> 人吃鸡</span>

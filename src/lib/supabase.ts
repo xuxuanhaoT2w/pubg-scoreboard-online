@@ -347,6 +347,13 @@ export async function deleteMatchGames(roomId: string, matchId: string): Promise
   if (error) throw error;
 }
 
+/** 删除已结束场次及其全部对局。先删对局，避免外键关联阻止删除场次。 */
+export async function deleteMatchWithGames(roomId: string, matchId: string): Promise<void> {
+  await deleteMatchGames(roomId, matchId);
+  const { error } = await db().from('matches').delete().eq('id', matchId).eq('room_id', roomId);
+  if (error) throw error;
+}
+
 // ---------- 草稿 ----------
 export async function getDraft(roomId: string): Promise<DraftPayload> {
   const supabase = db();

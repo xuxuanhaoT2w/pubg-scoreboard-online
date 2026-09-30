@@ -189,9 +189,9 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
                   className="tac-btn h-8 px-3 text-xs text-primary"
                   disabled={!currentMatch}
                   onClick={async () => {
-                    const ok = await confirm({ title: '结束当前场次？', message: '当前场次将归档到历史场次；排行榜与对局记录会从新场次重新开始。', confirmText: '结束并新建', cancelText: '取消', danger: true });
+                    const ok = await confirm({ title: '结束当前场次？', message: '当前场次将保存到历史场次；排行榜与对局记录会从新场次重新开始。', confirmText: '结束并新建', cancelText: '取消', danger: true });
                     if (!ok) return;
-                    try { await endCurrentMatch(); toast.success('当前场次已归档，已开启新场次'); } catch (e) { toast.error(e instanceof Error ? e.message : '结束场次失败'); }
+                    try { await endCurrentMatch(); toast.success('当前场次已结束，可在「查看历史场次」中查看'); } catch (e) { toast.error(e instanceof Error ? e.message : '结束场次失败'); }
                   }}
                 >结束场次</button>
               </div>
