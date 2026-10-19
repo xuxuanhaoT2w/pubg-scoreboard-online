@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Crosshair,
-  Crown,
   ChevronDown,
   Gift,
   Loader2,
   Minus,
   Plus,
-  Skull,
   Swords,
   Trophy,
-  Users,
 } from 'lucide-react';
 import { useAppStore } from '../store/app-store';
 import { scoreGame } from '../lib/scoring';
@@ -74,11 +71,6 @@ export function RecordPage() {
   );
   const totalWinningGames = games.filter((game) => game.winnerIds.length > 0).length;
   const currentKills = Object.values(effectiveKills).reduce((sum, kills) => sum + kills, 0);
-  const highestNegativeScore = rankedPlayers.reduce<number | null>((lowest, player) => {
-    const score = statsMap.get(player.id)?.totalScore ?? 0;
-    return score < 0 && (lowest === null || score < lowest) ? score : lowest;
-  }, null);
-
   const canSave = n >= 2;
 
   const toggleParticipant = (id: string) =>
@@ -232,9 +224,7 @@ export function RecordPage() {
 
       {showGiftRules && <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3 animate-fade-in"><div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink">赠分规则</span><span className="mr-1 text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><span className="text-ink-muted">→</span><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div></section>}
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        {/* 左侧：录入表格 */}
-        <section className="tac-card overflow-hidden">
+      <section className="tac-card overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
             <span>选择参战队员</span>
             <span className="text-center">击杀数</span>
@@ -363,56 +353,7 @@ export function RecordPage() {
             })}
           </div>
           <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-primary/30 bg-panel/95 px-5 py-3 backdrop-blur"><div className="text-xs text-ink-muted"><b className="text-ink">{n}</b> 人参战 · 本局 <b className="num text-primary">{currentKills}</b> 杀{canSave ? <span className="ml-2 text-gain">可以保存</span> : <span className="ml-2 text-primary">至少需 2 人参战</span>}</div><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-44 gap-2 px-6 text-base disabled:opacity-40">{saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局战绩</>}</button></div>
-        </section>
-
-        {/* 右侧：当场排行榜 */}
-        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <div className="tac-card order-first border border-primary/50 bg-primary/[0.06] p-4">
-            <div className="mb-3 flex items-center gap-2">
-              <Users size={15} className="text-primary" />
-              <h2 className="font-display text-base font-bold tracking-wider text-primary">当场排行榜</h2>
-            </div>
-            <div className="mb-3 grid grid-cols-3 divide-x divide-line rounded-lg border border-line bg-panel/70 py-2">
-              <div className="text-center"><div className="flex items-center justify-center gap-1 text-[10px] text-ink-muted"><Swords size={10} />已录入</div><div className="num mt-0.5 text-base font-bold text-ink">{games.length}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
-              <div className="text-center"><div className="flex items-center justify-center gap-1 text-[10px] text-ink-muted"><Skull size={10} />总击杀</div><div className="num mt-0.5 text-base font-bold text-primary">{totalKills}<span className="ml-0.5 text-[10px] font-normal">杀</span></div></div>
-              <div className="text-center"><div className="flex items-center justify-center gap-1 text-[10px] text-ink-muted"><Trophy size={10} />吃鸡局数</div><div className="num mt-0.5 text-base font-bold text-gain">{totalWinningGames}<span className="ml-0.5 text-[10px] font-normal">局</span></div></div>
-            </div>
-            <div className="space-y-1.5">
-              {rankedPlayers
-                .slice()
-                .sort((a, b) => {
-                  const sa = statsMap.get(a.id)?.totalScore ?? 0;
-                  const sb = statsMap.get(b.id)?.totalScore ?? 0;
-                  const aIsBoss = highestNegativeScore !== null && sa === highestNegativeScore;
-                  const bIsBoss = highestNegativeScore !== null && sb === highestNegativeScore;
-                  if (aIsBoss !== bIsBoss) return aIsBoss ? -1 : 1;
-                  return sb - sa;
-                })
-                .map((p, i) => {
-                  const stat = statsMap.get(p.id);
-                  const total = stat?.totalScore ?? 0;
-                  const isHighestNegative = highestNegativeScore !== null && total === highestNegativeScore;
-                  return (
-                    <div key={p.id} className={`relative overflow-hidden rounded-lg border px-3 py-2.5 text-sm ${isHighestNegative ? 'border-amber-300 bg-gradient-to-r from-amber-500/25 via-primary/12 to-amber-500/20 ring-1 ring-primary/50 shadow-[inset_0_0_0_1px_rgba(255,236,168,0.24),0_0_18px_rgba(245,166,35,0.30)]' : 'border-line/70 bg-panel/80'}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="relative flex min-w-0 items-center gap-2"><span className={`num flex h-5 w-5 shrink-0 items-center justify-center rounded text-xs font-bold ${i === 0 ? 'bg-primary text-black' : isHighestNegative ? 'bg-primary text-black shadow-[0_0_12px_rgba(245,166,35,0.7)]' : 'bg-panel-2 text-ink-muted'}`}>{i + 1}</span><span className="min-w-0"><span className="block truncate font-semibold">{p.name}</span>{isHighestNegative && <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold text-primary"><Crown size={11} fill="currentColor" />尊贵老板席位</span>}</span></span>
-                        <span className={`relative min-w-[92px] rounded-lg border px-2.5 py-1 text-center ${isHighestNegative ? 'border-primary/55 bg-panel/85' : total > 0 ? 'border-gain/40 bg-gain/10' : total < 0 ? 'border-loss/40 bg-loss/10' : 'border-line bg-panel-2'}`}><span className={`flex items-center justify-center gap-1 text-[9px] font-semibold tracking-wider ${isHighestNegative ? 'text-primary/85' : 'text-ink-muted'}`}>{isHighestNegative ? <><Crown size={10} fill="currentColor" />老板积分</> : <><Trophy size={9} />总积分</>}</span><span
-                          className={`num block text-xl font-bold leading-5 tabular-nums ${
-                            total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'
-                          }`}
-                        >
-                          {formatScore(total)}
-                        </span></span>
-                      </div>
-                      <div className="mt-2 grid grid-cols-3 divide-x divide-line/80 rounded bg-panel-2/80 py-1.5 text-center"><div><span className="flex items-center justify-center gap-0.5 text-[9px] text-ink-muted"><Swords size={9} />参战</span><b className="num text-sm text-ink">{stat?.games ?? 0}</b></div><div><span className="flex items-center justify-center gap-0.5 text-[9px] text-ink-muted"><Skull size={9} />击杀</span><b className="num text-sm text-primary">{stat?.totalKills ?? 0}</b></div><div><span className="flex items-center justify-center gap-0.5 text-[9px] text-ink-muted"><Trophy size={9} />吃鸡</span><b className="num text-sm text-gain">{stat?.wins ?? 0}</b></div></div>
-                    </div>
-                  );
-                })}
-              {rankedPlayers.length === 0 && <p className="py-2 text-center text-xs text-ink-muted">暂无已记分队员</p>}
-            </div>
-          </div>
-        </aside>
-      </div>
+      </section>
 
       {/* 记录页快捷提示 */}
       <div className="mt-4 flex items-center justify-center gap-2 text-[11px] text-ink-muted">
