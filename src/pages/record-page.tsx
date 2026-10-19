@@ -24,6 +24,7 @@ export function RecordPage() {
   const confirm = useConfirm();
   const [saving, setSaving] = useState(false);
   const [showGiftRules, setShowGiftRules] = useState(false);
+  const [showBench, setShowBench] = useState(false);
   const [giftFromId, setGiftFromId] = useState('');
   const [giftToId, setGiftToId] = useState('');
 
@@ -48,6 +49,8 @@ export function RecordPage() {
     const selectedIds = new Set(selected.map((player) => player.id));
     return [...selected, ...players.filter((player) => !selectedIds.has(player.id))];
   }, [players, d.participantIds]);
+  const benchPlayers = orderedPlayers.filter((player) => !d.participantIds.includes(player.id));
+  const visiblePlayers = showBench ? orderedPlayers : orderedPlayers.filter((player) => d.participantIds.includes(player.id));
   const n = participantIds.length;
 
   const kills = d.kills ?? {};
@@ -240,7 +243,7 @@ export function RecordPage() {
           )}
 
           <div className="divide-y divide-line/60">
-            {orderedPlayers.map((p) => {
+            {visiblePlayers.map((p) => {
               const isIn = d.participantIds.includes(p.id);
               const isWinner = winnerIds.includes(p.id);
               const k = kills[p.id] ?? 0;
@@ -353,6 +356,7 @@ export function RecordPage() {
               );
             })}
           </div>
+          {benchPlayers.length > 0 && <button type="button" className="flex w-full items-center justify-center gap-1.5 border-t border-line bg-panel-2/70 px-4 py-2.5 text-xs font-semibold text-ink-muted transition-colors hover:bg-panel-2 hover:text-primary" onClick={() => setShowBench((open) => !open)}><ChevronDown size={15} className={showBench ? 'rotate-180 transition-transform' : 'transition-transform'} />{showBench ? '收起未参战队员' : `展开未参战队员（${benchPlayers.length}）`}</button>}
           <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-primary/30 bg-panel/95 px-5 py-3 backdrop-blur"><div className="text-xs text-ink-muted"><b className="text-ink">{n}</b> 人参战 · 本局 <b className="num text-primary">{currentKills}</b> 杀{canSave ? <span className="ml-2 text-gain">可以保存</span> : <span className="ml-2 text-primary">至少需 2 人参战</span>}</div><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-44 gap-2 px-6 text-base disabled:opacity-40">{saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局战绩</>}</button></div>
       </section>
 
