@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Crosshair,
+  Crown,
   ChevronDown,
   Gift,
   Loader2,
@@ -74,6 +75,10 @@ export function RecordPage() {
   );
   const totalWinningGames = games.filter((game) => game.winnerIds.length > 0).length;
   const currentKills = Object.values(effectiveKills).reduce((sum, kills) => sum + kills, 0);
+  const highestNegativeScore = rankedPlayers.reduce<number | null>((lowest, player) => {
+    const score = statsMap.get(player.id)?.totalScore ?? 0;
+    return score < 0 && (lowest === null || score < lowest) ? score : lowest;
+  }, null);
   const canSave = n >= 2;
 
   const toggleParticipant = (id: string) =>
@@ -210,11 +215,19 @@ export function RecordPage() {
         <div className="divide-y divide-line/60">
           {rankedPlayers
             .slice()
-            .sort((a, b) => (statsMap.get(b.id)?.totalScore ?? 0) - (statsMap.get(a.id)?.totalScore ?? 0))
+            .sort((a, b) => {
+              const aScore = statsMap.get(a.id)?.totalScore ?? 0;
+              const bScore = statsMap.get(b.id)?.totalScore ?? 0;
+              const aIsBoss = highestNegativeScore !== null && aScore === highestNegativeScore;
+              const bIsBoss = highestNegativeScore !== null && bScore === highestNegativeScore;
+              if (aIsBoss !== bIsBoss) return aIsBoss ? -1 : 1;
+              return bScore - aScore;
+            })
             .map((player, index) => {
               const stat = statsMap.get(player.id);
               const total = stat?.totalScore ?? 0;
-              return <div key={player.id} className={`grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:grid-cols-[52px_minmax(0,1fr)_76px_76px_76px_112px] ${index === 0 ? 'bg-primary/[0.06]' : ''}`}><span className={`num flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${index === 0 ? 'bg-primary text-black shadow-[0_0_14px_rgba(245,166,35,0.45)]' : 'bg-panel-2 text-ink-muted'}`}>{index + 1}</span><div className="min-w-0"><div className="truncate font-bold">{player.name}</div><div className="mt-0.5 text-[10px] text-ink-muted sm:hidden">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 鸡 · {stat?.games ?? 0} 局</div></div><span className="hidden text-center text-sm sm:block"><b className="num text-ink">{stat?.totalKills ?? 0}</b> 杀</span><span className="hidden text-center text-sm sm:block"><b className="num text-gain">{stat?.wins ?? 0}</b> 鸡</span><span className="num hidden text-center text-sm text-ink-muted sm:block">{stat?.games ?? 0}</span><span className={`num text-right text-2xl font-bold ${total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'}`}>{formatScore(total)}</span></div>;
+              const isBoss = highestNegativeScore !== null && total === highestNegativeScore;
+              return <div key={player.id} className={`grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:grid-cols-[52px_minmax(0,1fr)_76px_76px_76px_112px] ${isBoss ? 'border-y border-amber-300/75 bg-[linear-gradient(105deg,rgba(145,91,12,0.62),rgba(245,166,35,0.24),rgba(84,52,8,0.58))] shadow-[inset_0_0_24px_rgba(255,216,126,0.18),0_0_20px_rgba(245,166,35,0.22)]' : index === 0 ? 'bg-primary/[0.06]' : ''}`}><span className={`num flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${isBoss ? 'bg-gradient-to-br from-amber-100 via-primary to-amber-700 text-amber-950 shadow-[0_0_18px_rgba(255,213,116,0.8)]' : index === 0 ? 'bg-primary text-black shadow-[0_0_14px_rgba(245,166,35,0.45)]' : 'bg-panel-2 text-ink-muted'}`}>{isBoss ? <Crown size={17} fill="currentColor" /> : index + 1}</span><div className="min-w-0"><div className="flex items-center gap-1.5"><span className="truncate font-bold">{player.name}</span>{isBoss && <span className="flex shrink-0 items-center gap-0.5 rounded bg-amber-100/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-100"><Crown size={10} fill="currentColor" />尊贵老板席位</span>}</div><div className={`mt-0.5 text-[10px] sm:hidden ${isBoss ? 'text-amber-100/80' : 'text-ink-muted'}`}>{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 鸡 · {stat?.games ?? 0} 局</div></div><span className={`hidden text-center text-sm sm:block ${isBoss ? 'text-amber-100/90' : ''}`}><b className="num text-ink">{stat?.totalKills ?? 0}</b> 杀</span><span className={`hidden text-center text-sm sm:block ${isBoss ? 'text-amber-100/90' : ''}`}><b className="num text-gain">{stat?.wins ?? 0}</b> 鸡</span><span className={`num hidden text-center text-sm sm:block ${isBoss ? 'text-amber-100/90' : 'text-ink-muted'}`}>{stat?.games ?? 0}</span><span className={`num rounded-lg border px-2.5 py-1 text-right text-2xl font-bold shadow-sm ${isBoss ? 'border-amber-200/70 bg-amber-100/15 text-loss shadow-[0_0_18px_rgba(255,210,100,0.3)]' : total > 0 ? 'border-gain/40 bg-gain/10 text-gain' : total < 0 ? 'border-loss/40 bg-loss/10 text-loss' : 'border-line bg-panel-2 text-ink-muted'}`}>{formatScore(total)}</span></div>;
             })}
           {rankedPlayers.length === 0 && <p className="py-4 text-center text-sm text-ink-muted">完成首局保存后，这里会显示当场实时排名</p>}
         </div>
