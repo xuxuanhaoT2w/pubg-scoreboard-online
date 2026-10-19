@@ -202,7 +202,7 @@ export function RecordPage() {
       </header>
 
       <section className="mb-4 overflow-hidden rounded-xl border border-primary/45 bg-gradient-to-r from-primary/[0.13] via-panel to-panel shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 px-4 py-3"><div className="flex items-center gap-2"><Trophy size={18} className="text-primary" /><h2 className="font-display text-lg font-bold tracking-wide text-primary">当场总分排名</h2><span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">实时累计</span></div><span className="text-xs text-ink-muted">已录入 {games.length} 局 · {totalKills} 总击杀 · {totalWinningGames} 吃鸡局</span></div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 px-4 py-3"><div className="flex items-center gap-2"><Trophy size={18} className="text-primary" /><h2 className="font-display text-lg font-bold tracking-wide text-primary">排行榜</h2><span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">本场实时</span></div><span className="text-xs text-ink-muted">已录入 {games.length} 局 · {totalKills} 总击杀 · {totalWinningGames} 吃鸡局</span></div>
         <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {rankedPlayers
             .slice()
