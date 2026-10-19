@@ -41,6 +41,16 @@ export function RecordPage() {
     () => players.filter((p) => d.participantIds.includes(p.id)),
     [players, d.participantIds],
   );
+  // 参战队员按勾选顺序置顶，未参战者统一放在末尾，便于连续录入击杀。
+  const orderedPlayers = useMemo(() => {
+    const playerById = new Map(players.map((player) => [player.id, player]));
+    const selected = d.participantIds.flatMap((id) => {
+      const player = playerById.get(id);
+      return player ? [player] : [];
+    });
+    const selectedIds = new Set(selected.map((player) => player.id));
+    return [...selected, ...players.filter((player) => !selectedIds.has(player.id))];
+  }, [players, d.participantIds]);
   const n = participantIds.length;
 
   const kills = d.kills ?? {};
@@ -191,15 +201,28 @@ export function RecordPage() {
             <h1 className="font-display text-2xl font-bold tracking-wide sm:text-3xl">录入对局 <span className="ml-2 align-middle font-body text-xs font-normal text-ink-muted">{currentMatch?.name ?? '当前场次'} · 第 {games.length + 1} 局</span></h1>
             <p className="mt-1 text-xs text-ink-muted">填写击杀、选择吃鸡；所有变动会实时同步给房间成员。</p>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2"><button type="button" onClick={() => void handleEndMatch()} disabled={!currentMatch} className="tac-btn h-10 gap-1.5 border border-primary/45 bg-panel/80 px-4 text-sm text-primary disabled:opacity-40"><Trophy size={16} /> 结束当前场次</button><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-36 gap-2 px-6 text-base disabled:opacity-40">
-              {saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 确认保存本局</>}
-            </button></div>
+          <div className="flex flex-wrap items-center justify-end gap-2"><button type="button" onClick={() => void handleEndMatch()} disabled={!currentMatch} className="tac-btn h-10 gap-1.5 border border-primary/45 bg-panel/80 px-4 text-sm text-primary disabled:opacity-40"><Trophy size={16} /> 结束当前场次</button></div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-primary/20 pt-3 text-xs">
           <span><b className="num text-base text-primary">{n}</b> 人参战</span><span><b className="num text-base text-ink">{currentKills}</b> 总击杀</span><span><b className="num text-base text-gain">{winnerIds.length}</b> 人吃鸡</span>
           <span className={`ml-auto font-semibold ${canSave ? 'text-gain' : 'text-primary'}`}>{canSave ? '已满足保存条件' : '至少选择 2 名参战队员'}</span>
         </div>
       </header>
+
+      <section className="mb-4 overflow-hidden rounded-xl border border-primary/45 bg-gradient-to-r from-primary/[0.13] via-panel to-panel shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 px-4 py-3"><div className="flex items-center gap-2"><Trophy size={18} className="text-primary" /><h2 className="font-display text-lg font-bold tracking-wide text-primary">当场总分排名</h2><span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">实时累计</span></div><span className="text-xs text-ink-muted">已录入 {games.length} 局 · {totalKills} 总击杀 · {totalWinningGames} 吃鸡局</span></div>
+        <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {rankedPlayers
+            .slice()
+            .sort((a, b) => (statsMap.get(b.id)?.totalScore ?? 0) - (statsMap.get(a.id)?.totalScore ?? 0))
+            .map((player, index) => {
+              const stat = statsMap.get(player.id);
+              const total = stat?.totalScore ?? 0;
+              return <div key={player.id} className="flex items-center gap-3 rounded-lg border border-line/80 bg-panel/85 px-3 py-2.5"><span className={`num flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${index === 0 ? 'bg-primary text-black shadow-[0_0_14px_rgba(245,166,35,0.45)]' : 'bg-panel-2 text-ink-muted'}`}>{index + 1}</span><div className="min-w-0 flex-1"><div className="truncate font-bold">{player.name}</div><div className="mt-0.5 text-[10px] text-ink-muted">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 鸡 · {stat?.games ?? 0} 局</div></div><div className="rounded-lg border border-primary/25 bg-primary/[0.08] px-2.5 py-1 text-right"><div className="text-[9px] font-semibold text-primary/80">总积分</div><div className={`num text-2xl font-bold leading-6 ${total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'}`}>{formatScore(total)}</div></div></div>;
+            })}
+          {rankedPlayers.length === 0 && <p className="col-span-full py-2 text-center text-sm text-ink-muted">完成首局保存后，这里会显示当场实时排名</p>}
+        </div>
+      </section>
 
       <section className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-panel-2 px-3 py-2.5">
         <button type="button" onClick={() => { setEditingActivity('正在调整本局参战人员'); toggleAll(); }} className="tac-btn h-9 px-4 text-sm" disabled={players.length === 0}>{players.length > 0 && players.every((p) => d.participantIds.includes(p.id)) ? '全部缺席' : '全员参战'}</button>
@@ -226,7 +249,7 @@ export function RecordPage() {
           )}
 
           <div className="divide-y divide-line/60">
-            {players.map((p) => {
+            {orderedPlayers.map((p) => {
               const isIn = d.participantIds.includes(p.id);
               const isWinner = winnerIds.includes(p.id);
               const k = kills[p.id] ?? 0;
@@ -339,6 +362,7 @@ export function RecordPage() {
               );
             })}
           </div>
+          <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-primary/30 bg-panel/95 px-5 py-3 backdrop-blur"><div className="text-xs text-ink-muted"><b className="text-ink">{n}</b> 人参战 · 本局 <b className="num text-primary">{currentKills}</b> 杀{canSave ? <span className="ml-2 text-gain">可以保存</span> : <span className="ml-2 text-primary">至少需 2 人参战</span>}</div><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-44 gap-2 px-6 text-base disabled:opacity-40">{saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局战绩</>}</button></div>
         </section>
 
         {/* 右侧：当场排行榜 */}
