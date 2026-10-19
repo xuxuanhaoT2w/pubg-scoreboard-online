@@ -203,16 +203,17 @@ export function RecordPage() {
 
       <section className="mb-4 overflow-hidden rounded-xl border border-primary/45 bg-gradient-to-r from-primary/[0.13] via-panel to-panel shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-primary/20 px-4 py-3"><div className="flex items-center gap-2"><Trophy size={18} className="text-primary" /><h2 className="font-display text-lg font-bold tracking-wide text-primary">排行榜</h2><span className="rounded bg-primary/15 px-2 py-0.5 text-[10px] font-semibold text-primary">本场实时</span></div><span className="text-xs text-ink-muted">已录入 {games.length} 局 · {totalKills} 总击杀 · {totalWinningGames} 吃鸡局</span></div>
-        <div className="grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="hidden grid-cols-[52px_minmax(0,1fr)_76px_76px_76px_112px] items-center gap-3 border-b border-line/70 bg-panel-2/70 px-4 py-2 text-[10px] font-semibold tracking-wider text-ink-muted sm:grid"><span>排名</span><span>队员</span><span className="text-center">击杀</span><span className="text-center">吃鸡</span><span className="text-center">场次</span><span className="text-right">累计积分</span></div>
+        <div className="divide-y divide-line/60">
           {rankedPlayers
             .slice()
             .sort((a, b) => (statsMap.get(b.id)?.totalScore ?? 0) - (statsMap.get(a.id)?.totalScore ?? 0))
             .map((player, index) => {
               const stat = statsMap.get(player.id);
               const total = stat?.totalScore ?? 0;
-              return <div key={player.id} className="flex items-center gap-3 rounded-lg border border-line/80 bg-panel/85 px-3 py-2.5"><span className={`num flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${index === 0 ? 'bg-primary text-black shadow-[0_0_14px_rgba(245,166,35,0.45)]' : 'bg-panel-2 text-ink-muted'}`}>{index + 1}</span><div className="min-w-0 flex-1"><div className="truncate font-bold">{player.name}</div><div className="mt-0.5 text-[10px] text-ink-muted">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 鸡 · {stat?.games ?? 0} 局</div></div><div className="rounded-lg border border-primary/25 bg-primary/[0.08] px-2.5 py-1 text-right"><div className="text-[9px] font-semibold text-primary/80">总积分</div><div className={`num text-2xl font-bold leading-6 ${total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'}`}>{formatScore(total)}</div></div></div>;
+              return <div key={player.id} className={`grid grid-cols-[42px_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:grid-cols-[52px_minmax(0,1fr)_76px_76px_76px_112px] ${index === 0 ? 'bg-primary/[0.06]' : ''}`}><span className={`num flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold ${index === 0 ? 'bg-primary text-black shadow-[0_0_14px_rgba(245,166,35,0.45)]' : 'bg-panel-2 text-ink-muted'}`}>{index + 1}</span><div className="min-w-0"><div className="truncate font-bold">{player.name}</div><div className="mt-0.5 text-[10px] text-ink-muted sm:hidden">{stat?.totalKills ?? 0} 杀 · {stat?.wins ?? 0} 鸡 · {stat?.games ?? 0} 局</div></div><span className="hidden text-center text-sm sm:block"><b className="num text-ink">{stat?.totalKills ?? 0}</b> 杀</span><span className="hidden text-center text-sm sm:block"><b className="num text-gain">{stat?.wins ?? 0}</b> 鸡</span><span className="num hidden text-center text-sm text-ink-muted sm:block">{stat?.games ?? 0}</span><span className={`num text-right text-2xl font-bold ${total > 0 ? 'text-gain' : total < 0 ? 'text-loss' : 'text-ink-muted'}`}>{formatScore(total)}</span></div>;
             })}
-          {rankedPlayers.length === 0 && <p className="col-span-full py-2 text-center text-sm text-ink-muted">完成首局保存后，这里会显示当场实时排名</p>}
+          {rankedPlayers.length === 0 && <p className="py-4 text-center text-sm text-ink-muted">完成首局保存后，这里会显示当场实时排名</p>}
         </div>
       </section>
 
