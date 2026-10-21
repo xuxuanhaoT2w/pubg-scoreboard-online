@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ArrowDown,
+  ArrowUp,
   Crosshair,
   Crown,
   ChevronDown,
@@ -28,6 +30,7 @@ export function RecordPage() {
   const [showGiftRules, setShowGiftRules] = useState(false);
   const [showBench, setShowBench] = useState(false);
   const [draggingPlayerId, setDraggingPlayerId] = useState<string | null>(null);
+  const [dropTargetPlayerId, setDropTargetPlayerId] = useState<string | null>(null);
   const [giftFromId, setGiftFromId] = useState('');
   const [giftToId, setGiftToId] = useState('');
 
@@ -103,6 +106,17 @@ export function RecordPage() {
       if (fromId === toId || !prev.participantIds.includes(fromId) || !prev.participantIds.includes(toId)) return prev;
       const ids = prev.participantIds.filter((id) => id !== fromId);
       ids.splice(ids.indexOf(toId), 0, fromId);
+      return { ...prev, participantIds: ids };
+    });
+
+  const moveParticipant = (id: string, direction: -1 | 1) =>
+    void updateDraft((prev) => {
+      const fromIndex = prev.participantIds.indexOf(id);
+      const targetIndex = fromIndex + direction;
+      if (fromIndex < 0 || targetIndex < 0 || targetIndex >= prev.participantIds.length) return prev;
+      const ids = [...prev.participantIds];
+      const [playerId] = ids.splice(fromIndex, 1);
+      ids.splice(targetIndex, 0, playerId);
       return { ...prev, participantIds: ids };
     });
 
@@ -253,7 +267,7 @@ export function RecordPage() {
 
       <section className="tac-card overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-            <span>参战队员 <span className="ml-1 normal-case font-normal text-ink-muted">（拖拽排序）</span></span>
+            <span>参战队员 <span className="ml-1 normal-case font-normal text-ink-muted">（拖动手柄或点箭头排序）</span></span>
             <span className="text-center">击杀数</span>
             <span className="text-center">吃鸡</span>
             <span className="text-right">本局积分</span>
@@ -277,21 +291,33 @@ export function RecordPage() {
                 <div
                   key={p.id}
                   onDragOver={(event) => {
-                    if (isIn && draggingPlayerId && draggingPlayerId !== p.id) event.preventDefault();
+                    if (isIn && draggingPlayerId && draggingPlayerId !== p.id) {
+                      event.preventDefault();
+                      setDropTargetPlayerId(p.id);
+                    }
+                  }}
+                  onDragLeave={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+                      setDropTargetPlayerId(null);
+                    }
                   }}
                   onDrop={(event) => {
                     event.preventDefault();
                     const sourceId = event.dataTransfer.getData('text/plain') || draggingPlayerId;
-                    if (isIn && sourceId) reorderParticipants(sourceId, p.id);
+                    if (isIn && sourceId && sourceId !== p.id) {
+                      reorderParticipants(sourceId, p.id);
+                      toast.success('参战顺序已同步');
+                    }
                     setDraggingPlayerId(null);
+                    setDropTargetPlayerId(null);
                   }}
                   className={`grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 px-5 py-2.5 transition-colors ${
                     isIn ? '' : 'opacity-45'
-                  } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'border-y border-primary/50 bg-primary/10 opacity-60' : ''}`}
+                  } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'border-y border-primary/50 bg-primary/10 opacity-60' : ''} ${dropTargetPlayerId === p.id ? 'border-t-2 border-primary bg-primary/10 shadow-[inset_0_8px_12px_-12px_rgba(245,166,35,0.9)]' : ''}`}
                 >
                   {/* 队员 + 参战勾选 */}
                   <div className="flex min-w-0 items-center gap-3">
-                    <button type="button" draggable={isIn} aria-label={`拖拽排序 ${p.name}`} onDragStart={(event) => { if (!isIn) return; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', p.id); setDraggingPlayerId(p.id); setEditingActivity(`正在调整 ${p.name} 的参战排序`); }} onDragEnd={() => { setDraggingPlayerId(null); setEditingActivity('正在录入本局'); }} className={`flex h-7 w-5 shrink-0 items-center justify-center rounded text-ink-muted ${isIn ? 'cursor-grab hover:bg-panel-2 hover:text-primary active:cursor-grabbing' : 'cursor-not-allowed opacity-30'}`}><GripVertical size={17} /></button>
+                    <div className={`flex shrink-0 items-center ${isIn ? 'text-ink-muted' : 'opacity-30'}`}><button type="button" draggable={isIn} aria-label={`拖拽排序 ${p.name}`} onDragStart={(event) => { if (!isIn) return; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', p.id); setDraggingPlayerId(p.id); setEditingActivity(`正在调整 ${p.name} 的参战排序`); }} onDragEnd={() => { setDraggingPlayerId(null); setDropTargetPlayerId(null); setEditingActivity('正在录入本局'); }} className={`flex h-7 w-5 items-center justify-center rounded ${isIn ? 'cursor-grab hover:bg-panel-2 hover:text-primary active:cursor-grabbing' : 'cursor-not-allowed'}`}><GripVertical size={17} /></button><div className="flex flex-col"><button type="button" aria-label={`上移 ${p.name}`} disabled={!isIn || d.participantIds.indexOf(p.id) === 0} onClick={() => { moveParticipant(p.id, -1); toast.success('已上移并同步'); }} className="flex h-3.5 w-4 items-center justify-center rounded hover:bg-panel-2 hover:text-primary disabled:opacity-20"><ArrowUp size={11} /></button><button type="button" aria-label={`下移 ${p.name}`} disabled={!isIn || d.participantIds.indexOf(p.id) === d.participantIds.length - 1} onClick={() => { moveParticipant(p.id, 1); toast.success('已下移并同步'); }} className="flex h-3.5 w-4 items-center justify-center rounded hover:bg-panel-2 hover:text-primary disabled:opacity-20"><ArrowDown size={11} /></button></div></div>
                     <button
                       type="button"
                       aria-label={isIn ? '取消参战' : '参战'}
