@@ -57,10 +57,10 @@ function App() {
     <div className="min-h-screen">
       <NavBar active={tab} onChange={setTab} />
       <div className="border-b border-line bg-panel-2/70">
-        <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 text-xs sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-2 gap-y-1 px-4 py-2 text-xs sm:flex-nowrap sm:px-6">
           <span className="rounded bg-primary/15 px-2 py-1 font-semibold text-primary">当前场次</span>
           <span className="font-bold text-ink">{currentMatch?.name ?? '未创建场次'}</span>
-          <span className="text-ink-muted">第 {games.length + 1} 局待录入</span>
+          <span className="hidden text-ink-muted sm:inline">第 {games.length + 1} 局待录入</span>
           <button
             type="button"
             className="flex shrink-0 items-center gap-1 rounded border border-line bg-panel px-2 py-1 font-display text-[11px] font-bold tracking-widest text-primary transition-colors hover:border-primary/60"
@@ -77,7 +77,7 @@ function App() {
           >
             <Copy size={12} /> {room?.join_code}
           </button>
-          <span className={`ml-auto flex items-center gap-1.5 font-semibold ${onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'text-gain' : 'text-ink-muted'}`}><Radio size={13} className={onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'animate-pulse' : ''} /> 实时协作中</span>
+          <span className={`ml-auto flex shrink-0 items-center gap-1.5 font-semibold ${onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'text-gain' : 'text-ink-muted'}`}><Radio size={13} className={onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'animate-pulse' : ''} /><span className="hidden sm:inline">实时协作中</span><span className="sm:hidden">协作</span></span>
         </div>
       </div>
       <MemberPresenceBar />

@@ -282,11 +282,11 @@ export function RecordPage() {
       {showGiftRules && <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3 animate-fade-in"><div className="flex flex-wrap items-center gap-2 text-xs"><span className="font-semibold text-ink">赠分规则</span><span className="mr-1 text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><span className="text-ink-muted">→</span><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div></section>}
 
       <section className="tac-card overflow-hidden">
-          <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
+          <div className="grid grid-cols-[minmax(0,1fr)_104px_62px] items-center gap-2 border-b border-line bg-panel-2 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted sm:grid-cols-[minmax(0,1.4fr)_120px_96px_84px] sm:gap-3 sm:px-5">
             <span>参战队员 <span className="ml-1 normal-case font-normal text-ink-muted">（可拖至任意位置，松手同步）</span></span>
             <span className="text-center">击杀数</span>
             <span className="text-center">吃鸡</span>
-            <span className="text-right">本局积分</span>
+            <span className="hidden text-right sm:block">本局积分</span>
           </div>
 
           {players.length === 0 && (
@@ -327,7 +327,7 @@ export function RecordPage() {
                     setDraggingPlayerId(null);
                     setDropTargetPlayerId(null);
                   }}
-                  className={`relative grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 px-5 py-2.5 transition-all duration-150 ${
+                  className={`relative grid grid-cols-[minmax(0,1fr)_104px_62px] items-center gap-2 px-3 py-2.5 transition-all duration-150 sm:grid-cols-[minmax(0,1.4fr)_120px_96px_84px] sm:gap-3 sm:px-5 ${
                     isIn ? '' : 'opacity-45'
                   } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'scale-[0.99] border-y border-primary/50 bg-primary/10 opacity-60 shadow-[0_6px_18px_rgba(0,0,0,0.2)]' : ''} ${dropTargetPlayerId === p.id ? 'border-t-2 border-primary bg-primary/15 shadow-[inset_0_10px_16px_-12px_rgba(245,166,35,1),0_-4px_14px_rgba(245,166,35,0.16)]' : ''}`}
                 >
@@ -353,6 +353,11 @@ export function RecordPage() {
                         {isMe && (
                           <span className="rounded bg-primary/15 px-1.5 py-px text-[10px] font-semibold text-primary">
                             我
+                          </span>
+                        )}
+                        {isIn && n >= 2 && (
+                          <span className={`num shrink-0 text-sm font-bold sm:hidden ${delta > 0 ? 'text-gain' : delta < 0 ? 'text-loss' : 'text-ink-muted'}`}>
+                            {formatScore(delta)}
                           </span>
                         )}
                       </div>
@@ -425,7 +430,7 @@ export function RecordPage() {
                       {isWinner ? '吃鸡' : '—'}
                     </button>
                   </div>
-                  <span className={`num text-right text-lg font-bold tabular-nums ${delta > 0 ? 'text-gain' : delta < 0 ? 'text-loss' : 'text-ink-muted'}`}>
+                  <span className={`num hidden text-right text-lg font-bold tabular-nums sm:block ${delta > 0 ? 'text-gain' : delta < 0 ? 'text-loss' : 'text-ink-muted'}`}>
                     {isIn && n >= 2 ? formatScore(delta) : '—'}
                   </span>
                 </div>
@@ -458,7 +463,7 @@ export function RecordPage() {
             )}
           </div>
           {benchPlayers.length > 0 && <button type="button" className="flex w-full items-center justify-center gap-1.5 border-t border-line bg-panel-2/70 px-4 py-2.5 text-xs font-semibold text-ink-muted transition-colors hover:bg-panel-2 hover:text-primary" onClick={() => setShowBench((open) => !open)}><ChevronDown size={15} className={showBench ? 'rotate-180 transition-transform' : 'transition-transform'} />{showBench ? '收起未参战队员' : `展开未参战队员（${benchPlayers.length}）`}</button>}
-          <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-primary/30 bg-panel/95 px-5 py-3 backdrop-blur"><div className="text-xs text-ink-muted"><b className="text-ink">{n}</b> 人参战 · 本局 <b className="num text-primary">{currentKills}</b> 杀{canSave ? <span className="ml-2 text-gain">可以保存</span> : <span className="ml-2 text-primary">至少需 2 人参战</span>}</div><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-44 gap-2 px-6 text-base disabled:opacity-40">{saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局战绩</>}</button></div>
+          <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 border-t border-primary/30 bg-panel/95 px-3 py-3 backdrop-blur sm:gap-3 sm:px-5"><div className="text-xs text-ink-muted"><b className="text-ink">{n}</b> 人参战 · 本局 <b className="num text-primary">{currentKills}</b> 杀{canSave ? <span className="ml-2 text-gain">可以保存</span> : <span className="ml-2 text-primary">至少需 2 人参战</span>}</div><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 w-full gap-2 px-4 text-base disabled:opacity-40 sm:w-auto sm:min-w-44 sm:px-6">{saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局战绩</>}</button></div>
       </section>
 
       {/* 记录页快捷提示 */}

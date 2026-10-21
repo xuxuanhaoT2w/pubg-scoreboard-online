@@ -157,3 +157,23 @@ button {
 .animate-toast-in {
   animation: toast-in 0.2s ease-out both;
 }
+
+@media (max-width: 639px) {
+  .tac-card {
+    clip-path: none;
+    border-radius: 12px;
+  }
+
+  .kill-input {
+    height: 42px;
+  }
+
+  .kill-btn {
+    width: 29px;
+  }
+
+  .kill-num {
+    width: 40px;
+    font-size: 1.05rem;
+  }
+}

@@ -196,7 +196,7 @@ export function SettingsPage({ onNavigate }: { onNavigate: (tab: TabKey) => void
                 >结束场次</button>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2"><button type="button" className="tac-btn h-11 gap-2 border border-primary/40 bg-primary/15 px-3 text-sm text-primary" onClick={() => handleCopy(room?.join_code ?? '', '房间码')}>{copied ? <Check size={16} /> : <Copy size={16} />}复制房间码</button><button type="button" className="tac-btn tac-btn-primary h-11 gap-2 px-3 text-sm" onClick={() => handleCopy(shareUrl, '邀请链接')}><Share2 size={16} />复制邀请链接</button></div>
+            <div className="grid gap-2 sm:grid-cols-2"><button type="button" className="tac-btn h-11 gap-2 border border-primary/40 bg-primary/15 px-3 text-sm text-primary" onClick={() => handleCopy(room?.join_code ?? '', '房间码')}>{copied ? <Check size={16} /> : <Copy size={16} />}复制房间码</button><button type="button" className="tac-btn tac-btn-primary h-11 gap-2 px-3 text-sm" onClick={() => handleCopy(shareUrl, '邀请链接')}><Share2 size={16} />复制邀请链接</button></div>
             <p className="text-[11px] leading-relaxed text-ink-muted">队友打开邀请链接可自动进入本房间；也可在首页输入 6 位房间码。所有场次与战绩均实时同步。</p>
             <div className="rounded-lg border border-line bg-panel/70 p-3">
               <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => setShowMaintenance((show) => !show)}><span><span className="block text-xs font-semibold text-ink">房间维护</span><span className="mt-0.5 block text-[11px] text-ink-muted">切换、退出、清理缓存与永久删除</span></span><span className="text-xs text-primary">{showMaintenance ? '收起' : '展开'}</span></button>
