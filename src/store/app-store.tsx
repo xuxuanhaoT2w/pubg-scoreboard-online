@@ -151,6 +151,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [draft, setDraftState] = useState<DraftPayload | null>(null);
   const draftRef = useRef<DraftPayload | null>(null);
+  const draftSaveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingDraftWritesRef = useRef(0);
   const [meId, setMeId] = useState<string | null>(null);
   const [onlinePlayerIds, setOnlinePlayerIds] = useState<string[]>([]);
   const [onlineTemporaryCount, setOnlineTemporaryCount] = useState(0);
@@ -262,7 +264,9 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
           const active = allMatches.find((match) => match.status === 'active');
           setGames(active ? await listGames(room.id, active.id) : []);
         } else {
-          setDraft(await getDraft(room.id));
+          const remoteDraft = await getDraft(room.id);
+          // 本机输入尚未持久化完成时，避免旧的实时回拉覆盖正在编辑的数值。
+          if (pendingDraftWritesRef.current === 0) setDraft(remoteDraft);
         }
       } catch {
         /* 订阅回调中静默处理，下次会再同步 */
@@ -487,6 +491,8 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     async (game: Omit<Game, 'id' | 'playedAt'>) => {
       const active = matches.find((match) => match.status === 'active');
       if (!room || !active) throw new Error('当前场次不可用');
+      // 等待此前的草稿修改落库，防止旧请求在保存本局后反向覆盖新草稿。
+      await draftSaveQueueRef.current;
       await insertGame(room.id, active.id, game);
       // 清空草稿，准备连录下一局（保留参战人员）
       const reset: DraftPayload = {
@@ -524,6 +530,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
     if (!room) throw new Error('尚未进入房间');
     const active = matches.find((match) => match.status === 'active');
     if (!active) throw new Error('当前没有进行中的场次');
+    await draftSaveQueueRef.current;
     await apiEndMatch(active.id);
     const next = await apiCreateMatch(room.id, `第 ${matches.length + 1} 场`);
     const reset: DraftPayload = {
@@ -555,11 +562,20 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       const base = draftRef.current ?? { participantIds: [], kills: {}, winnerIds: [] };
       const next = updater(base);
       setDraft(next); // 乐观更新，本地即时反馈
-      try {
-        await apiSaveDraft(room.id, next, meId ?? 'anon');
-      } catch {
-        // 保存失败时下次实时订阅会回拉，这里不打断输入
-      }
+      pendingDraftWritesRef.current += 1;
+      const persist = async () => {
+        try {
+          await apiSaveDraft(room.id, next, meId ?? 'anon');
+        } catch {
+          // 保存失败时下次实时订阅会回拉，这里不打断输入。
+        } finally {
+          pendingDraftWritesRef.current -= 1;
+        }
+      };
+      // 连续改击杀时按顺序提交，避免较早请求晚返回造成分数跳回。
+      const scheduled = draftSaveQueueRef.current.catch(() => undefined).then(persist);
+      draftSaveQueueRef.current = scheduled;
+      await scheduled;
     },
     [room, meId, setDraft],
   );
