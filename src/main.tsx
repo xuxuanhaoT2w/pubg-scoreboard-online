@@ -12,8 +12,6 @@ import { RoomManagerPage } from './pages/room-manager-page';
 import { LobbyPage } from './pages/lobby-page';
 import { ToastProvider } from './components/toast';
 import { ConfirmProvider } from './components/confirm-dialog';
-import { IdentityBar } from './components/identity-bar';
-import { MemberPresenceBar } from './components/member-presence-bar';
 import { useToast } from './components/toast';
 
 function App() {
@@ -80,8 +78,6 @@ function App() {
           <span className={`ml-auto flex shrink-0 items-center gap-1.5 font-semibold ${onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'text-gain' : 'text-ink-muted'}`}><Radio size={13} className={onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'animate-pulse' : ''} /><span className="hidden sm:inline">实时协作中</span><span className="sm:hidden">协作</span></span>
         </div>
       </div>
-      <MemberPresenceBar />
-      {tab === 'record' && <IdentityBar />}
       <main className="mx-auto w-full max-w-6xl">
         {tab === 'record' && <RecordPage />}
         {tab === 'history' && <HistoryPage onNavigate={setTab} />}
