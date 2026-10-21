@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Crosshair, Loader2, Radio } from 'lucide-react';
+import { Copy, Crosshair, Loader2, Radio } from 'lucide-react';
 import './index.css';
 import { RoomStoreProvider, useAppStore } from './store/app-store';
 import { NavBar, type TabKey } from './components/nav-bar';
@@ -14,9 +14,11 @@ import { ToastProvider } from './components/toast';
 import { ConfirmProvider } from './components/confirm-dialog';
 import { IdentityBar } from './components/identity-bar';
 import { MemberPresenceBar } from './components/member-presence-bar';
+import { useToast } from './components/toast';
 
 function App() {
-  const { status, joinRoom, ready, currentMatch, games, onlinePlayerIds, onlineTemporaryCount } = useAppStore();
+  const { status, joinRoom, ready, room, currentMatch, games, onlinePlayerIds, onlineTemporaryCount } = useAppStore();
+  const toast = useToast();
   const [tab, setTab] = useState<TabKey>('record');
 
   // 支持通过分享链接自动加入：?join=房间码
@@ -59,6 +61,22 @@ function App() {
           <span className="rounded bg-primary/15 px-2 py-1 font-semibold text-primary">当前场次</span>
           <span className="font-bold text-ink">{currentMatch?.name ?? '未创建场次'}</span>
           <span className="text-ink-muted">第 {games.length + 1} 局待录入</span>
+          <button
+            type="button"
+            className="flex shrink-0 items-center gap-1 rounded border border-line bg-panel px-2 py-1 font-display text-[11px] font-bold tracking-widest text-primary transition-colors hover:border-primary/60"
+            title="点击复制房间码"
+            onClick={async () => {
+              if (!room?.join_code) return;
+              try {
+                await navigator.clipboard.writeText(room.join_code);
+                toast.success(`房间码 ${room.join_code} 已复制`);
+              } catch {
+                toast.error('复制失败，请前往房间页查看房间码');
+              }
+            }}
+          >
+            <Copy size={12} /> {room?.join_code}
+          </button>
           <span className={`ml-auto flex items-center gap-1.5 font-semibold ${onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'text-gain' : 'text-ink-muted'}`}><Radio size={13} className={onlinePlayerIds.length + onlineTemporaryCount > 0 ? 'animate-pulse' : ''} /> 实时协作中</span>
         </div>
       </div>
