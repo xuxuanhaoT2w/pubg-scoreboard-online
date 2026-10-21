@@ -22,6 +22,8 @@ import { useConfirm } from '../components/confirm-dialog';
 import type { DraftPayload } from '../lib/supabase';
 import type { Game } from '../lib/types';
 
+const END_DROP_TARGET = '__end__';
+
 export function RecordPage() {
   const { players, games, draft, meId, updateDraft, commitGame, currentMatch, endCurrentMatch, setEditingActivity } = useAppStore();
   const toast = useToast();
@@ -45,16 +47,27 @@ export function RecordPage() {
     () => players.filter((p) => d.participantIds.includes(p.id)),
     [players, d.participantIds],
   );
+  // 拖动时仅在本地预览最终顺序；松手后才写入云端，避免拖动过程产生多次同步。
+  const previewParticipantIds = useMemo(() => {
+    if (!draggingPlayerId || !d.participantIds.includes(draggingPlayerId)) return d.participantIds;
+    const ids = d.participantIds.filter((id) => id !== draggingPlayerId);
+    if (!dropTargetPlayerId) return d.participantIds;
+    const targetIndex = ids.indexOf(dropTargetPlayerId);
+    if (targetIndex < 0) return [...ids, draggingPlayerId];
+    ids.splice(targetIndex, 0, draggingPlayerId);
+    return ids;
+  }, [d.participantIds, draggingPlayerId, dropTargetPlayerId]);
+
   // 参战队员按勾选顺序置顶，未参战者统一放在末尾，便于连续录入击杀。
   const orderedPlayers = useMemo(() => {
     const playerById = new Map(players.map((player) => [player.id, player]));
-    const selected = d.participantIds.flatMap((id) => {
+    const selected = previewParticipantIds.flatMap((id) => {
       const player = playerById.get(id);
       return player ? [player] : [];
     });
     const selectedIds = new Set(selected.map((player) => player.id));
     return [...selected, ...players.filter((player) => !selectedIds.has(player.id))];
-  }, [players, d.participantIds]);
+  }, [players, previewParticipantIds]);
   const benchPlayers = orderedPlayers.filter((player) => !d.participantIds.includes(player.id));
   const visiblePlayers = showBench ? orderedPlayers : orderedPlayers.filter((player) => d.participantIds.includes(player.id));
   const n = participantIds.length;
@@ -101,11 +114,14 @@ export function RecordPage() {
       };
     });
 
-  const reorderParticipants = (fromId: string, toId: string) =>
+  const reorderParticipants = (fromId: string, toId: string | null) =>
     void updateDraft((prev) => {
-      if (fromId === toId || !prev.participantIds.includes(fromId) || !prev.participantIds.includes(toId)) return prev;
+      if (fromId === toId || !prev.participantIds.includes(fromId)) return prev;
       const ids = prev.participantIds.filter((id) => id !== fromId);
-      ids.splice(ids.indexOf(toId), 0, fromId);
+      const targetIndex = toId ? ids.indexOf(toId) : -1;
+      if (toId && targetIndex < 0) return prev;
+      if (targetIndex < 0) ids.push(fromId);
+      else ids.splice(targetIndex, 0, fromId);
       return { ...prev, participantIds: ids };
     });
 
@@ -267,7 +283,7 @@ export function RecordPage() {
 
       <section className="tac-card overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 border-b border-line bg-panel-2 px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-            <span>参战队员 <span className="ml-1 normal-case font-normal text-ink-muted">（拖动手柄或点箭头排序）</span></span>
+            <span>参战队员 <span className="ml-1 normal-case font-normal text-ink-muted">（可拖至任意位置，松手同步）</span></span>
             <span className="text-center">击杀数</span>
             <span className="text-center">吃鸡</span>
             <span className="text-right">本局积分</span>
@@ -311,10 +327,11 @@ export function RecordPage() {
                     setDraggingPlayerId(null);
                     setDropTargetPlayerId(null);
                   }}
-                  className={`grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 px-5 py-2.5 transition-colors ${
+                  className={`relative grid grid-cols-[minmax(0,1.4fr)_120px_96px_84px] items-center gap-3 px-5 py-2.5 transition-all duration-150 ${
                     isIn ? '' : 'opacity-45'
-                  } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'border-y border-primary/50 bg-primary/10 opacity-60' : ''} ${dropTargetPlayerId === p.id ? 'border-t-2 border-primary bg-primary/10 shadow-[inset_0_8px_12px_-12px_rgba(245,166,35,0.9)]' : ''}`}
+                  } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'scale-[0.99] border-y border-primary/50 bg-primary/10 opacity-60 shadow-[0_6px_18px_rgba(0,0,0,0.2)]' : ''} ${dropTargetPlayerId === p.id ? 'border-t-2 border-primary bg-primary/15 shadow-[inset_0_10px_16px_-12px_rgba(245,166,35,1),0_-4px_14px_rgba(245,166,35,0.16)]' : ''}`}
                 >
+                  {dropTargetPlayerId === p.id && <span className="absolute -top-2 left-5 z-10 rounded-full border border-primary/60 bg-panel px-2 py-0.5 text-[10px] font-bold text-primary shadow-lg">松开后放到此处</span>}
                   {/* 队员 + 参战勾选 */}
                   <div className="flex min-w-0 items-center gap-3">
                     <div className={`flex shrink-0 items-center ${isIn ? 'text-ink-muted' : 'opacity-30'}`}><button type="button" draggable={isIn} aria-label={`拖拽排序 ${p.name}`} onDragStart={(event) => { if (!isIn) return; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', p.id); setDraggingPlayerId(p.id); setEditingActivity(`正在调整 ${p.name} 的参战排序`); }} onDragEnd={() => { setDraggingPlayerId(null); setDropTargetPlayerId(null); setEditingActivity('正在录入本局'); }} className={`flex h-7 w-5 items-center justify-center rounded ${isIn ? 'cursor-grab hover:bg-panel-2 hover:text-primary active:cursor-grabbing' : 'cursor-not-allowed'}`}><GripVertical size={17} /></button><div className="flex flex-col"><button type="button" aria-label={`上移 ${p.name}`} disabled={!isIn || d.participantIds.indexOf(p.id) === 0} onClick={() => { moveParticipant(p.id, -1); toast.success('已上移并同步'); }} className="flex h-3.5 w-4 items-center justify-center rounded hover:bg-panel-2 hover:text-primary disabled:opacity-20"><ArrowUp size={11} /></button><button type="button" aria-label={`下移 ${p.name}`} disabled={!isIn || d.participantIds.indexOf(p.id) === d.participantIds.length - 1} onClick={() => { moveParticipant(p.id, 1); toast.success('已下移并同步'); }} className="flex h-3.5 w-4 items-center justify-center rounded hover:bg-panel-2 hover:text-primary disabled:opacity-20"><ArrowDown size={11} /></button></div></div>
@@ -414,6 +431,31 @@ export function RecordPage() {
                 </div>
               );
             })}
+            {draggingPlayerId && visiblePlayers.some((player) => d.participantIds.includes(player.id)) && (
+              <div
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDropTargetPlayerId(END_DROP_TARGET);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  const sourceId = event.dataTransfer.getData('text/plain') || draggingPlayerId;
+                  if (sourceId) {
+                    reorderParticipants(sourceId, null);
+                    toast.success('参战顺序已同步');
+                  }
+                  setDraggingPlayerId(null);
+                  setDropTargetPlayerId(null);
+                }}
+                className={`mx-3 my-2 flex h-10 items-center justify-center rounded-lg border-2 border-dashed text-xs font-semibold transition-all ${
+                  dropTargetPlayerId === END_DROP_TARGET
+                    ? 'border-primary bg-primary/15 text-primary shadow-[0_0_18px_rgba(245,166,35,0.18)]'
+                    : 'border-line text-ink-muted'
+                }`}
+              >
+                {dropTargetPlayerId === END_DROP_TARGET ? '松开后移至末位' : '拖至此处可移到末位'}
+              </div>
+            )}
           </div>
           {benchPlayers.length > 0 && <button type="button" className="flex w-full items-center justify-center gap-1.5 border-t border-line bg-panel-2/70 px-4 py-2.5 text-xs font-semibold text-ink-muted transition-colors hover:bg-panel-2 hover:text-primary" onClick={() => setShowBench((open) => !open)}><ChevronDown size={15} className={showBench ? 'rotate-180 transition-transform' : 'transition-transform'} />{showBench ? '收起未参战队员' : `展开未参战队员（${benchPlayers.length}）`}</button>}
           <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-3 border-t border-primary/30 bg-panel/95 px-5 py-3 backdrop-blur"><div className="text-xs text-ink-muted"><b className="text-ink">{n}</b> 人参战 · 本局 <b className="num text-primary">{currentKills}</b> 杀{canSave ? <span className="ml-2 text-gain">可以保存</span> : <span className="ml-2 text-primary">至少需 2 人参战</span>}</div><button type="button" onClick={handleSave} disabled={!canSave || saving} className="tac-btn tac-btn-primary h-12 min-w-44 gap-2 px-6 text-base disabled:opacity-40">{saving ? <Loader2 size={18} className="animate-spin" /> : <><Swords size={18} /> 保存本局战绩</>}</button></div>
