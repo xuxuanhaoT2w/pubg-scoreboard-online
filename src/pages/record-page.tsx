@@ -47,27 +47,16 @@ export function RecordPage() {
     () => players.filter((p) => d.participantIds.includes(p.id)),
     [players, d.participantIds],
   );
-  // 拖动时仅在本地预览最终顺序；松手后才写入云端，避免拖动过程产生多次同步。
-  const previewParticipantIds = useMemo(() => {
-    if (!draggingPlayerId || !d.participantIds.includes(draggingPlayerId)) return d.participantIds;
-    const ids = d.participantIds.filter((id) => id !== draggingPlayerId);
-    if (!dropTargetPlayerId) return d.participantIds;
-    const targetIndex = ids.indexOf(dropTargetPlayerId);
-    if (targetIndex < 0) return [...ids, draggingPlayerId];
-    ids.splice(targetIndex, 0, draggingPlayerId);
-    return ids;
-  }, [d.participantIds, draggingPlayerId, dropTargetPlayerId]);
-
   // 参战队员按勾选顺序置顶，未参战者统一放在末尾，便于连续录入击杀。
   const orderedPlayers = useMemo(() => {
     const playerById = new Map(players.map((player) => [player.id, player]));
-    const selected = previewParticipantIds.flatMap((id) => {
+    const selected = d.participantIds.flatMap((id) => {
       const player = playerById.get(id);
       return player ? [player] : [];
     });
     const selectedIds = new Set(selected.map((player) => player.id));
     return [...selected, ...players.filter((player) => !selectedIds.has(player.id))];
-  }, [players, previewParticipantIds]);
+  }, [players, d.participantIds]);
   const benchPlayers = orderedPlayers.filter((player) => !d.participantIds.includes(player.id));
   const visiblePlayers = showBench ? orderedPlayers : orderedPlayers.filter((player) => d.participantIds.includes(player.id));
   const n = participantIds.length;
@@ -327,9 +316,9 @@ export function RecordPage() {
                     setDraggingPlayerId(null);
                     setDropTargetPlayerId(null);
                   }}
-                  className={`relative grid grid-cols-[minmax(0,1fr)_104px_62px] items-center gap-2 px-3 py-2.5 transition-all duration-150 sm:grid-cols-[minmax(0,1.4fr)_120px_96px_84px] sm:gap-3 sm:px-5 ${
+                  className={`relative grid grid-cols-[minmax(0,1fr)_104px_62px] items-center gap-2 px-3 py-2.5 transition-colors duration-150 sm:grid-cols-[minmax(0,1.4fr)_120px_96px_84px] sm:gap-3 sm:px-5 ${
                     isIn ? '' : 'opacity-45'
-                  } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'scale-[0.99] border-y border-primary/50 bg-primary/10 opacity-60 shadow-[0_6px_18px_rgba(0,0,0,0.2)]' : ''} ${dropTargetPlayerId === p.id ? 'border-t-2 border-primary bg-primary/15 shadow-[inset_0_10px_16px_-12px_rgba(245,166,35,1),0_-4px_14px_rgba(245,166,35,0.16)]' : ''}`}
+                  } ${isMe ? 'bg-primary/5' : ''} ${draggingPlayerId === p.id ? 'border-y border-primary/50 bg-primary/10 opacity-60' : ''} ${dropTargetPlayerId === p.id ? 'border-t-2 border-primary bg-primary/15 shadow-[inset_0_10px_16px_-12px_rgba(245,166,35,1),0_-4px_14px_rgba(245,166,35,0.16)]' : ''}`}
                 >
                   {dropTargetPlayerId === p.id && <span className="absolute -top-2 left-5 z-10 rounded-full border border-primary/60 bg-panel px-2 py-0.5 text-[10px] font-bold text-primary shadow-lg">松开后放到此处</span>}
                   {/* 队员 + 参战勾选 */}
