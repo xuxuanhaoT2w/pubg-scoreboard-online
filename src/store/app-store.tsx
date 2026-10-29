@@ -192,6 +192,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       winnerIds: d.winnerIds.filter((id) => playerIds.has(id)),
       zeroKillsAsOneIds: (d.zeroKillsAsOneIds ?? []).filter((id) => playerIds.has(id)),
       threeKillsPlusOneIds: (d.threeKillsPlusOneIds ?? []).filter((id) => playerIds.has(id)),
+      threeKillsPlusOneThreshold: Math.max(1, Math.min(99, d.threeKillsPlusOneThreshold ?? 3)),
       giftRules: (d.giftRules ?? []).filter((rule) => playerIds.has(rule.fromId) && playerIds.has(rule.toId) && rule.fromId !== rule.toId),
     });
     roomIdRef.current = roomId;
@@ -502,6 +503,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         winnerIds: [],
         zeroKillsAsOneIds: (game.zeroKillsAsOneIds ?? []).filter((id) => game.participantIds.includes(id)),
         threeKillsPlusOneIds: (game.threeKillsPlusOneIds ?? []).filter((id) => game.participantIds.includes(id)),
+        threeKillsPlusOneThreshold: game.threeKillsPlusOneThreshold ?? 3,
         giftRules: game.giftRules ?? [],
       };
       await apiSaveDraft(room.id, reset, meId ?? 'system');
@@ -540,6 +542,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       kills: Object.fromEntries(players.map((player) => [player.id, 0])),
       winnerIds: [],
       threeKillsPlusOneIds: [],
+      threeKillsPlusOneThreshold: 3,
     };
     await apiSaveDraft(room.id, reset, meId ?? 'system');
     setMatches((prev) => [next, ...prev.map((match) => match.id === active.id ? { ...match, status: 'ended' as const, endedAt: new Date().toISOString() } : match)]);

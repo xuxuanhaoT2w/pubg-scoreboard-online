@@ -14,6 +14,8 @@ export interface Game {
   zeroKillsAsOneIds?: string[];
   /** 当前场次内指定队员达到 3 杀时，本局最终击杀数加 1 */
   threeKillsPlusOneIds?: string[];
+  /** 当前场次触发上述规则的击杀阈值，默认 3 */
+  threeKillsPlusOneThreshold?: number;
   /** 吃鸡玩家 id 列表 */
   winnerIds: string[];
   /** 本局满足击杀条件后的定向赠分规则 */

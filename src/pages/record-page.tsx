@@ -42,7 +42,7 @@ export function RecordPage() {
   }, [setEditingActivity]);
 
   // 草稿未加载完时显示骨架
-  const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], threeKillsPlusOneIds: [], giftRules: [] };
+  const d: DraftPayload = draft ?? { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], threeKillsPlusOneIds: [], threeKillsPlusOneThreshold: 3, giftRules: [] };
   const participantIds = useMemo(
     () => players.filter((p) => d.participantIds.includes(p.id)),
     [players, d.participantIds],
@@ -65,12 +65,13 @@ export function RecordPage() {
   const winnerIds = d.winnerIds ?? [];
   const zeroKillsAsOneIds = d.zeroKillsAsOneIds ?? [];
   const threeKillsPlusOneIds = d.threeKillsPlusOneIds ?? [];
+  const threeKillsPlusOneThreshold = Math.max(1, Math.min(99, d.threeKillsPlusOneThreshold ?? 3));
   const giftRules = d.giftRules ?? [];
   const effectiveKills = useMemo(() => Object.fromEntries(participantIds.map((player) => {
     const rawKills = kills[player.id] ?? 0;
     const zeroAdjusted = rawKills === 0 && zeroKillsAsOneIds.includes(player.id) ? 1 : rawKills;
-    return [player.id, zeroAdjusted + (threeKillsPlusOneIds.includes(player.id) && rawKills >= 3 ? 1 : 0)];
-  })), [participantIds, kills, zeroKillsAsOneIds, threeKillsPlusOneIds]);
+    return [player.id, zeroAdjusted + (threeKillsPlusOneIds.includes(player.id) && rawKills >= threeKillsPlusOneThreshold ? 1 : 0)];
+  })), [participantIds, kills, zeroKillsAsOneIds, threeKillsPlusOneIds, threeKillsPlusOneThreshold]);
 
   const liveScores = useMemo(
     () => (n >= 2 ? scoreGame(d.participantIds, effectiveKills, winnerIds, giftRules) : {}),
@@ -206,6 +207,7 @@ export function RecordPage() {
         kills: effectiveKills,
         zeroKillsAsOneIds,
         threeKillsPlusOneIds,
+        threeKillsPlusOneThreshold,
         winnerIds,
         giftRules,
         scores: liveScores,
@@ -278,7 +280,7 @@ export function RecordPage() {
         <button type="button" onClick={() => setShowGiftRules((open) => !open)} className={`tac-btn ml-auto h-9 gap-1.5 px-3 text-xs ${showGiftRules || giftRules.length > 0 || threeKillsPlusOneIds.length > 0 ? 'border border-primary/40 bg-primary/10 text-primary' : 'text-ink-muted'}`}><Gift size={14} /> 本场规则{giftRules.length + threeKillsPlusOneIds.length > 0 ? `（${giftRules.length + threeKillsPlusOneIds.length}）` : ''}<ChevronDown size={14} className={showGiftRules ? 'rotate-180 transition-transform' : 'transition-transform'} /></button>
       </section>
 
-      {showGiftRules && <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3 animate-fade-in"><div className="space-y-3 text-xs"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-ink">≥3 杀 +1</span><span className="text-ink-muted">选中的队员本场每局达到 3 杀时，最终击杀数自动 +1</span>{participantIds.map((player) => <button key={player.id} type="button" onClick={() => { setEditingActivity(`正在配置 ${player.name} 的 ≥3 杀 +1 规则`); toggleThreeKillsPlusOne(player.id); }} className={`rounded bg-panel px-2 py-1 transition-colors ${threeKillsPlusOneIds.includes(player.id) ? 'border border-primary/50 bg-primary/15 font-semibold text-primary' : 'border border-line text-ink-muted hover:border-primary/40'}`}>{threeKillsPlusOneIds.includes(player.id) ? '✓ ' : ''}{player.name}</button>)}</div><div className="flex flex-wrap items-center gap-2 border-t border-line/70 pt-3"><span className="font-semibold text-ink">赠分规则</span><span className="mr-1 text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><span className="text-ink-muted">→</span><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div></div></section>}
+      {showGiftRules && <section className="mb-4 rounded-lg border border-line bg-panel-2 px-4 py-3 animate-fade-in"><div className="space-y-3 text-xs"><div className="flex flex-wrap items-center gap-2"><span className="font-semibold text-ink">≥ <input type="number" min={1} max={99} inputMode="numeric" value={threeKillsPlusOneThreshold} onChange={(e) => { const value = Math.max(1, Math.min(99, Number(e.target.value) || 1)); setEditingActivity('正在配置击杀阈值'); void updateDraft((prev) => ({ ...prev, threeKillsPlusOneThreshold: value })); }} className="tac-input inline-block h-7 w-14 px-2 text-center text-xs" aria-label="击杀阈值" /> 杀 +1</span><span className="text-ink-muted">选中的队员本场每局达到该阈值时，最终击杀数自动 +1</span>{participantIds.map((player) => <button key={player.id} type="button" onClick={() => { setEditingActivity(`正在配置 ${player.name} 的 ≥${threeKillsPlusOneThreshold} 杀 +1 规则`); toggleThreeKillsPlusOne(player.id); }} className={`rounded bg-panel px-2 py-1 transition-colors ${threeKillsPlusOneIds.includes(player.id) ? 'border border-primary/50 bg-primary/15 font-semibold text-primary' : 'border border-line text-ink-muted hover:border-primary/40'}`}>{threeKillsPlusOneIds.includes(player.id) ? '✓ ' : ''}{player.name}</button>)}</div><div className="flex flex-wrap items-center gap-2 border-t border-line/70 pt-3"><span className="font-semibold text-ink">赠分规则</span><span className="mr-1 text-ink-muted">A ≥1 杀时，A −1 分给 B</span><select className="tac-input h-8 w-28 text-xs" value={giftFromId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftFromId(e.target.value); }}><option value="">选择 A</option>{participantIds.map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><span className="text-ink-muted">→</span><select className="tac-input h-8 w-28 text-xs" value={giftToId} onChange={(e) => { setEditingActivity('正在配置赠分规则'); setGiftToId(e.target.value); }}><option value="">选择 B</option>{participantIds.filter((player) => player.id !== giftFromId).map((player) => <option key={player.id} value={player.id}>{player.name}</option>)}</select><button type="button" className="tac-btn h-8 px-3 text-xs" disabled={!giftFromId || !giftToId || giftFromId === giftToId} onClick={() => { setEditingActivity('正在配置赠分规则'); addGiftRule(); }}>添加</button>{giftRules.map((rule) => <button key={`${rule.fromId}-${rule.toId}`} type="button" className="rounded bg-primary/15 px-2 py-1 text-xs text-primary" onClick={() => { setEditingActivity('正在配置赠分规则'); removeGiftRule(rule.fromId, rule.toId); }}>{players.find((p) => p.id === rule.fromId)?.name} → {players.find((p) => p.id === rule.toId)?.name} ×1</button>)}</div></div></section>}
 
       <section className="tac-card overflow-hidden">
           <div className="grid grid-cols-[minmax(0,1fr)_104px_62px] items-center gap-2 border-b border-line bg-panel-2 px-3 py-3 text-[11px] font-semibold uppercase tracking-wider text-ink-muted sm:grid-cols-[minmax(0,1.4fr)_120px_96px_84px] sm:gap-3 sm:px-5">
