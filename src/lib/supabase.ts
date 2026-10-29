@@ -48,10 +48,11 @@ export interface DraftPayload {
   kills: Record<string, number>;
   winnerIds: string[];
   zeroKillsAsOneIds?: string[];
+  threeKillsPlusOneIds?: string[];
   giftRules?: GiftRule[];
 }
 
-export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], giftRules: [] };
+export const EMPTY_DRAFT: DraftPayload = { participantIds: [], kills: {}, winnerIds: [], zeroKillsAsOneIds: [], threeKillsPlusOneIds: [], giftRules: [] };
 
 let client: SupabaseClient | null = null;
 let clientConfig: { url: string; anonKey: string } | null = null;

@@ -191,6 +191,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       kills: Object.fromEntries(Object.entries(d.kills).filter(([id]) => playerIds.has(id))),
       winnerIds: d.winnerIds.filter((id) => playerIds.has(id)),
       zeroKillsAsOneIds: (d.zeroKillsAsOneIds ?? []).filter((id) => playerIds.has(id)),
+      threeKillsPlusOneIds: (d.threeKillsPlusOneIds ?? []).filter((id) => playerIds.has(id)),
       giftRules: (d.giftRules ?? []).filter((rule) => playerIds.has(rule.fromId) && playerIds.has(rule.toId) && rule.fromId !== rule.toId),
     });
     roomIdRef.current = roomId;
@@ -500,6 +501,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
         kills: Object.fromEntries(game.participantIds.map((id) => [id, 0])),
         winnerIds: [],
         zeroKillsAsOneIds: (game.zeroKillsAsOneIds ?? []).filter((id) => game.participantIds.includes(id)),
+        threeKillsPlusOneIds: (game.threeKillsPlusOneIds ?? []).filter((id) => game.participantIds.includes(id)),
         giftRules: game.giftRules ?? [],
       };
       await apiSaveDraft(room.id, reset, meId ?? 'system');
@@ -537,6 +539,7 @@ export function RoomStoreProvider({ children }: { children: ReactNode }) {
       participantIds: players.map((player) => player.id),
       kills: Object.fromEntries(players.map((player) => [player.id, 0])),
       winnerIds: [],
+      threeKillsPlusOneIds: [],
     };
     await apiSaveDraft(room.id, reset, meId ?? 'system');
     setMatches((prev) => [next, ...prev.map((match) => match.id === active.id ? { ...match, status: 'ended' as const, endedAt: new Date().toISOString() } : match)]);

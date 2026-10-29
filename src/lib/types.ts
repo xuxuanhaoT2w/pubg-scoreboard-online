@@ -12,6 +12,8 @@ export interface Game {
   kills: Record<string, number>;
   /** 当前场次沿用的 0 杀按 1 杀计算规则 */
   zeroKillsAsOneIds?: string[];
+  /** 当前场次内指定队员达到 3 杀时，本局最终击杀数加 1 */
+  threeKillsPlusOneIds?: string[];
   /** 吃鸡玩家 id 列表 */
   winnerIds: string[];
   /** 本局满足击杀条件后的定向赠分规则 */
