@@ -11,7 +11,7 @@ import {
   Trash2,
   Users,
   X,
-} from 'lucide-react';
+} from '../lib/lucide-icons';
 import { useAppStore } from '../store/app-store';
 import { useToast } from '../components/toast';
 import { useConfirm } from '../components/confirm-dialog';

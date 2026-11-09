@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Crosshair, Loader2, LogIn, Plus, RefreshCw, Share2, Trash2, Users, Wifi, WifiOff } from 'lucide-react';
+import { Crosshair, Loader2, LogIn, Plus, RefreshCw, Share2, Trash2, Users, Wifi, WifiOff } from '../lib/lucide-icons';
 import { useAppStore } from '../store/app-store';
 import { addGlobalPlayer, deleteGlobalPlayer, listGlobalPlayers, listRooms, type RoomRow } from '../lib/supabase';
 import type { Player } from '../lib/types';

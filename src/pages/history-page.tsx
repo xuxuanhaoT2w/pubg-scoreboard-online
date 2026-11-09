@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ClipboardList, Crosshair, Skull, Trash2, Trophy, Users } from 'lucide-react';
+import { ClipboardList, Crosshair, Skull, Trash2, Trophy, Users } from '../lib/lucide-icons';
 import { useAppStore } from '../store/app-store';
 import { useConfirm } from '../components/confirm-dialog';
 import { useToast } from '../components/toast';

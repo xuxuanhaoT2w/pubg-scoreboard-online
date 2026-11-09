@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle } from '../lib/lucide-icons';
 
 interface ConfirmOptions {
   title: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Copy, Crosshair, Loader2, Radio } from 'lucide-react';
+import { Copy, Crosshair, Loader2, Radio } from './lib/lucide-icons';
 import './index.css';
 import { RoomStoreProvider, useAppStore } from './store/app-store';
 import { NavBar, type TabKey } from './components/nav-bar';

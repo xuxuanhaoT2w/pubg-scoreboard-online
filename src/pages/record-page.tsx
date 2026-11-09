@@ -12,7 +12,7 @@ import {
   Plus,
   Swords,
   Trophy,
-} from 'lucide-react';
+} from '../lib/lucide-icons';
 import { useAppStore } from '../store/app-store';
 import { scoreGame } from '../lib/scoring';
 import { computeStats } from '../lib/scoring';

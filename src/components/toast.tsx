@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { CheckCircle2, AlertTriangle, Info } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Info } from '../lib/lucide-icons';
 
 type ToastKind = 'success' | 'error' | 'info';
 

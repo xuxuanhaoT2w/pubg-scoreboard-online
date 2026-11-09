@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import { Crosshair, History, Settings } from 'lucide-react';
+import { Crosshair, History, Settings } from '../lib/lucide-icons';
 
 export type TabKey = 'record' | 'history' | 'matches' | 'settings' | 'room-manager';
 

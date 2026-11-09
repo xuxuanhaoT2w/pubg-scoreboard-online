@@ -1,0 +1,44 @@
+// @ts-nocheck
+// Import icons from their individual modules so the EdgeOne builder does not
+// scan the entire lucide-react icon barrel (which can hit its EMFILE limit).
+export { default as AlertTriangle } from 'lucide-react/dist/esm/icons/alert-triangle.mjs';
+export { default as Archive } from 'lucide-react/dist/esm/icons/archive.mjs';
+export { default as ArrowDown } from 'lucide-react/dist/esm/icons/arrow-down.mjs';
+export { default as ArrowLeft } from 'lucide-react/dist/esm/icons/arrow-left.mjs';
+export { default as ArrowUp } from 'lucide-react/dist/esm/icons/arrow-up.mjs';
+export { default as Check } from 'lucide-react/dist/esm/icons/check.mjs';
+export { default as CheckCircle2 } from 'lucide-react/dist/esm/icons/circle-check-big.mjs';
+export { default as ChevronDown } from 'lucide-react/dist/esm/icons/chevron-down.mjs';
+export { default as ClipboardList } from 'lucide-react/dist/esm/icons/clipboard-list.mjs';
+export { default as Copy } from 'lucide-react/dist/esm/icons/copy.mjs';
+export { default as Crosshair } from 'lucide-react/dist/esm/icons/crosshair.mjs';
+export { default as Crown } from 'lucide-react/dist/esm/icons/crown.mjs';
+export { default as DoorOpen } from 'lucide-react/dist/esm/icons/door-open.mjs';
+export { default as Download } from 'lucide-react/dist/esm/icons/download.mjs';
+export { default as FileSpreadsheet } from 'lucide-react/dist/esm/icons/file-spreadsheet.mjs';
+export { default as Gift } from 'lucide-react/dist/esm/icons/gift.mjs';
+export { default as GripVertical } from 'lucide-react/dist/esm/icons/grip-vertical.mjs';
+export { default as History } from 'lucide-react/dist/esm/icons/history.mjs';
+export { default as Info } from 'lucide-react/dist/esm/icons/info.mjs';
+export { default as ListChecks } from 'lucide-react/dist/esm/icons/list-checks.mjs';
+export { default as Loader2 } from 'lucide-react/dist/esm/icons/loader-circle.mjs';
+export { default as LogIn } from 'lucide-react/dist/esm/icons/log-in.mjs';
+export { default as LogOut } from 'lucide-react/dist/esm/icons/log-out.mjs';
+export { default as Minus } from 'lucide-react/dist/esm/icons/minus.mjs';
+export { default as Pencil } from 'lucide-react/dist/esm/icons/pencil.mjs';
+export { default as PencilLine } from 'lucide-react/dist/esm/icons/pencil-line.mjs';
+export { default as Plus } from 'lucide-react/dist/esm/icons/plus.mjs';
+export { default as Radio } from 'lucide-react/dist/esm/icons/radio.mjs';
+export { default as RefreshCw } from 'lucide-react/dist/esm/icons/refresh-cw.mjs';
+export { default as Share2 } from 'lucide-react/dist/esm/icons/share-2.mjs';
+export { default as Skull } from 'lucide-react/dist/esm/icons/skull.mjs';
+export { default as Settings } from 'lucide-react/dist/esm/icons/settings.mjs';
+export { default as Swords } from 'lucide-react/dist/esm/icons/swords.mjs';
+export { default as Trash2 } from 'lucide-react/dist/esm/icons/trash-2.mjs';
+export { default as Trophy } from 'lucide-react/dist/esm/icons/trophy.mjs';
+export { default as User } from 'lucide-react/dist/esm/icons/user.mjs';
+export { default as UserRound } from 'lucide-react/dist/esm/icons/user-round.mjs';
+export { default as Users } from 'lucide-react/dist/esm/icons/users.mjs';
+export { default as Wifi } from 'lucide-react/dist/esm/icons/wifi.mjs';
+export { default as WifiOff } from 'lucide-react/dist/esm/icons/wifi-off.mjs';
+export { default as X } from 'lucide-react/dist/esm/icons/x.mjs';

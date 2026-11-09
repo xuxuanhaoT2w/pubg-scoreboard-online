@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Archive, ClipboardList, Download, FileSpreadsheet, Trash2, Trophy } from 'lucide-react';
+import { Archive, ClipboardList, Download, FileSpreadsheet, Trash2, Trophy } from '../lib/lucide-icons';
 import { useAppStore } from '../store/app-store';
 import { useConfirm } from '../components/confirm-dialog';
 import { useToast } from '../components/toast';

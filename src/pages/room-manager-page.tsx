@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, LogIn, RefreshCw, Trash2 } from 'lucide-react';
+import { ArrowLeft, LogIn, RefreshCw, Trash2 } from '../lib/lucide-icons';
 import { deleteAllRooms, deleteRoom, listRooms, type RoomRow } from '../lib/supabase';
 import { useAppStore } from '../store/app-store';
 import { useConfirm } from '../components/confirm-dialog';
