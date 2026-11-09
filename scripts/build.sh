@@ -16,7 +16,7 @@ npx --no-install vite build
 
 echo "Bundling Cloudflare Worker..."
 mkdir -p dist/server
-npx --no-install tsup server/index.ts --format esm --platform neutral --target es2022 --outDir dist/server --no-splitting --no-minify --out-extension .js=.js
+npx --no-install tsup server/index.ts --format esm --platform neutral --target es2022 --out-dir dist/server --no-splitting --no-minify --out-extension .js=.js
 cp dist/server/index.mjs dist/server/index.js
 mkdir -p dist/client
 cp -R dist/assets dist/client/
