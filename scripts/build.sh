@@ -14,13 +14,4 @@ ulimit -n 65536 2>/dev/null || true
 echo "Building frontend with Vite..."
 npx --no-install vite build
 
-echo "Bundling Cloudflare Worker..."
-mkdir -p dist/server
-npx --no-install tsup server/index.ts --format esm --platform neutral --target es2022 --out-dir dist/server --no-splitting --no-minify --out-extension .js=.js
-cp dist/server/index.mjs dist/server/index.js
-mkdir -p dist/client
-cp -R dist/assets dist/client/
-cp dist/index.html dist/client/index.html
-cp -R public/. dist/client/ 2>/dev/null || true
-
-echo "Build completed successfully!"
+echo "Static build completed successfully!"
